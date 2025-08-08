@@ -93,22 +93,39 @@ Requirements:
 
 Current git status and recent changes are shown below for context.`;
 
-    try {
-        const result = await runCommand(`claude --print '${claudePrompt.replace(/'/g, "'\\''")}' --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp`, { silent: true });
-        return result.stdout.trim();
-    } catch (error) {
-        console.warn('⚠️  Claude Code unavailable, using fallback commit message generation');
+    const maxRetries = 3;
+    const timeoutMs = 150000; // 2m30s
 
-        // Fallback commit message generation
-        const type = userMessage.match(/^(feat|fix|docs|style|refactor|test|chore)/) ?
-            userMessage.split(':')[0] : 'chore';
-        const description = userMessage.replace(/^(feat|fix|docs|style|refactor|test|chore):\s*/, '');
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+            console.log(`🔄 Attempt ${attempt}/${maxRetries} to generate commit message with Claude Code...`);
 
-        const prefix = jiraTicket ? `${jiraTicket}: ` : '';
-        const firstLine = `${prefix}${type}: ${description}`.substring(0, 50);
+            const result = await Promise.race([
+                runCommand(`claude --print '${claudePrompt.replace(/'/g, "'\\''")}' --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools=ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)`, { silent: false }),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Claude Code timeout')), timeoutMs)
+                )
+            ]);
 
-        return firstLine;
+            return result.stdout.trim();
+        } catch (error) {
+            if (attempt === maxRetries) {
+                console.warn('⚠️  Claude Code unavailable after 3 attempts, using fallback commit message generation');
+                break;
+            }
+            console.warn(`⚠️  Attempt ${attempt} failed: ${error.message}. Retrying...`);
+        }
     }
+
+    // Fallback commit message generation
+    const type = userMessage.match(/^(feat|fix|docs|style|refactor|test|chore)/) ?
+        userMessage.split(':')[0] : 'chore';
+    const description = userMessage.replace(/^(feat|fix|docs|style|refactor|test|chore):\s*/, '');
+
+    const prefix = jiraTicket ? `${jiraTicket}: ` : '';
+    const firstLine = `${prefix}${type}: ${description}`.substring(0, 50);
+
+    return firstLine;
 }
 
 async function main() {

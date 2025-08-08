@@ -536,31 +536,33 @@ export class JiraService {
 
   // Helper method to format text for JIRA markup
   static formatJiraText(text: string): string {
-    return text
-      // Convert markdown headers to JIRA headers
-      .replace(/^### (.*$)/gm, 'h3. $1')
-      .replace(/^## (.*$)/gm, 'h2. $1')
-      .replace(/^# (.*$)/gm, 'h1. $1')
+    // Completely rewritten from scratch - simple and reliable approach
+    let result = text;
 
-      // Convert markdown bold to JIRA bold (** to *) BEFORE list conversion
-      .replace(/\*\*(.*?)\*\*/g, '*$1*')
+    // Headers: # Header → h1. Header
+    result = result.replace(/^# (.+)$/gm, 'h1. $1');
+    result = result.replace(/^## (.+)$/gm, 'h2. $1');
+    result = result.replace(/^### (.+)$/gm, 'h3. $1');
 
-      // Convert markdown italic to JIRA italic (* to _) BEFORE list conversion
-      .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '_$1_')
+    // Bold: **text** → *text*
+    result = result.replace(/\*\*(.+?)\*\*/g, '*$1*');
 
-      // Convert markdown lists to JIRA lists AFTER italic/bold conversion
-      .replace(/^- (.*$)/gm, '* $1')
+    // Italic: _text_ → _text_ (underscore syntax, already JIRA format)
+    // Note: Single asterisk italic (*text*) intentionally not supported to avoid conflicts
 
-      // Convert markdown code blocks to JIRA code blocks
-      .replace(/```(\w+)?\n([\s\S]*?)\n```/g, '{code:$1}\n$2\n{code}')
-      .replace(/`([^`]+)`/g, '{{$1}}')
+    // Code blocks: ```code``` → {code}code{code}
+    result = result.replace(/```[\w]*\n?([\s\S]*?)\n?```/g, '{code}$1{code}');
 
-      // Convert markdown links to JIRA links
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '[$1|$2]')
+    // Inline code: `code` → {{code}}
+    result = result.replace(/`([^`]+)`/g, '{{$1}}');
 
-      // Clean up any remaining markdown artifacts
-      .replace(/^\s*\*\s*$/gm, '') // Remove empty bullet points
-      .replace(/\n\n\n+/g, '\n\n'); // Remove excessive line breaks
+    // Links: [text](url) → [text|url]
+    result = result.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '[$1|$2]');
+
+    // Lists: - item → * item (simple, no complex regex)
+    result = result.replace(/^- (.+)$/gm, '* $1');
+
+    return result;
   }
 
   // Story Status Management Methods

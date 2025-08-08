@@ -7,53 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.3.5] - 2025-08-08
-
-### Enhanced
-- Improved smart commit workflow automation
-- Enhanced Claude Code integration for changelog and documentation management
-- Refined commit message generation with better JIRA integration
-
-### Technical
-- Updated version consistency across project files
-- Enhanced pre-commit workflow validation
-- Improved build and deployment processes
-
-## [1.3.4] - 2025-08-08
+## [1.1.0] - 2025-08-08
 
 ### Added
-- Smart commit workflow functionality with automated JIRA ticket ID extraction
-- Enhanced testing framework for smart commit workflow validation
-- JIRA ticket ID extraction from commit messages and branch names
-- Automated cleanup scripts for development workflow
+- Smart commit workflow with automatic JIRA ticket ID extraction from branch names
+- Claude Code integration for automated changelog and documentation updates
+- Enhanced test coverage for smart commit functionality
+- Cleanup scripts for development workflow automation
 
 ### Enhanced
-- Smart commit message generation with enhanced Claude Code integration
-- Improved workflow automation for commit and changelog management
-
-### Technical
-- Added comprehensive tests for smart commit functionality
-- Enhanced JIRA integration with smart commit workflow
-- Improved error handling in commit message generation
-
-## [1.3.1] - 2025-08-08
-
-### Added
-- Claude Code integration for smart commit workflow
-- Enhanced commit message generation using Claude Code
-- Intelligent changelog and documentation updates via Claude Code scripts
-
-### Changed
-- Updated smart-commit.js to use claude:update-changelog and claude:update-docs scripts
-- Enhanced generateSmartCommitMessage function with Claude Code integration
-- Improved JIRA markup conversion to eliminate placeholder artifacts
+- JIRA service with improved ticket ID extraction capabilities
+- Development workflow with automated commit message generation
+- Test infrastructure with better verification of workflow functionality
 
 ### Fixed
-- Fixed JIRA text formatting placeholders (___JIRA_ITALIC___, ___END_ITALIC___)
-- Improved markdown to JIRA markup conversion logic
-- Enhanced error handling for Claude Code unavailability scenarios
+- Test expectations after npm package corrections
+- Smart commit workflow edge cases and error handling
 
-## [1.3.0] - 2025-08-08
+## [1.0.1] - 2025-08-08
 
 ### Added
 - Initial release of comprehensive JIRA MCP server
@@ -64,21 +35,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Issue linking and relationship management (blocks, relates to, depends on)
 - Automated story status updates based on task completion
 - Environment variable validation and secure configuration
-- Pre-commit framework integration for comprehensive workflow automation
 - TypeScript implementation with ESM modules and lazy service initialization
 - Comprehensive error handling with user-friendly messages
-- Nested CLAUDE.md files for improved codebase context and navigation
-- Version consistency validation across documentation files
-- Automated documentation synchronization checks
-- Complete project documentation with README.md, CLAUDE.md
-- Apache 2.0 LICENSE file with proper copyright notice
-- Enhanced Cursor IDE integration with detailed development rules
-- Comprehensive Jest testing framework with unit and e2e tests
-- Test coverage reporting and CI integration
-- Enhanced testing documentation in docs/TESTING.md
-- Coverage reports with HTML output and lcov format
-- Test fixtures for JIRA API response mocking
-- E2e workflow tests for complete user scenarios
 
 ### Technical Features
 - Model Context Protocol (MCP) server implementation
@@ -94,14 +52,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLAUDE.md with development context and architecture decisions
 - Environment variable configuration examples
 - Setup and troubleshooting guides
-- Pre-commit setup documentation
 
 ---
 
 ## Release Notes
 
-### Version 1.3.0 - Initial Release
-This is the initial release of the JIRA MCP server, providing comprehensive JIRA workflow automation through 13 specialized MCP tools. The project focuses on issue management, epic-story-task hierarchies, and automated status updates with professional-grade quality assurance.
+### Version 1.0.1 - Initial Release
+This is the initial release of the JIRA MCP server, providing comprehensive JIRA workflow automation through 13 specialized MCP tools. The project focuses on issue management, epic-story-task hierarchies, and automated status updates.
 
 ## Development Milestones
 
@@ -112,8 +69,6 @@ This is the initial release of the JIRA MCP server, providing comprehensive JIRA
 - ✅ Claude Code CLI and Desktop integration
 - ✅ Interactive setup and configuration tools
 - ✅ Comprehensive documentation and licensing
-- ✅ Pre-commit workflow automation
-- ✅ Automated testing and CI/CD integration
 
 ### Future Roadmap 🎯
 - 🎯 Webhook integration for real-time updates
