@@ -542,14 +542,14 @@ export class JiraService {
       .replace(/^## (.*$)/gm, 'h2. $1')
       .replace(/^# (.*$)/gm, 'h1. $1')
 
-      // Convert markdown lists to JIRA lists
-      .replace(/^- (.*$)/gm, '* $1')
-
-      // Convert markdown bold to JIRA bold (** to *)
+      // Convert markdown bold to JIRA bold (** to *) BEFORE list conversion
       .replace(/\*\*(.*?)\*\*/g, '*$1*')
 
-      // Convert markdown italic to JIRA italic (* to _) - only single asterisks that aren't part of bold
+      // Convert markdown italic to JIRA italic (* to _) BEFORE list conversion
       .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, '_$1_')
+
+      // Convert markdown lists to JIRA lists AFTER italic/bold conversion
+      .replace(/^- (.*$)/gm, '* $1')
 
       // Convert markdown code blocks to JIRA code blocks
       .replace(/```(\w+)?\n([\s\S]*?)\n```/g, '{code:$1}\n$2\n{code}')

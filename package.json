@@ -1,6 +1,6 @@
 {
   "name": "jira-mcp",
-  "version": "1.3.1",
+  "version": "1.3.5",
   "description": "Model Context Protocol (MCP) server for JIRA workflow automation - manages issue linking, epic hierarchies, and automates story status updates",
   "keywords": [
     "mcp",
@@ -24,9 +24,9 @@
   "type": "module",
   "main": "build/index.js",
   "bin": {
-    "jira-mcp": "./build/index.js",
-    "jira-mcp-setup": "./build/setup.js",
-    "jira-mcp-reconfigure": "./build/reconfigure.js"
+    "jira-mcp": "build/index.js",
+    "jira-mcp-setup": "build/setup.js",
+    "jira-mcp-reconfigure": "build/reconfigure.js"
   },
   "scripts": {
     "build": "tsc && chmod +x build/index.js && chmod +x build/setup.js && chmod +x build/reconfigure.js",
@@ -34,7 +34,7 @@
     "debug": "DEBUG=true ENVIRONMENT=development node build/index.js",
     "setup": "node build/setup.js",
     "pack": "npm run build && npm pack",
-    "redeploy": "npm run build && npm publish --registry http://localhost:4873/",
+    "redeploy": "npm run bump:patch && npm run claude:update-changelog && npm run build && npm publish --registry http://localhost:4873/",
     "publish": "npm run build && npm run test:ci && npm run validate-changelog && npm publish",
     "update-docs": "node scripts/update-docs.js",
     "validate-changelog": "node scripts/validate-changelog.js",
@@ -43,9 +43,12 @@
     "test:e2e": "jest tests/e2e",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "postinstall": "echo '\nTo setup jira-mcp with Claude Code/Desktop, run: npx jira-mcp-setup\n'",
-    "claude:update-changelog": "claude --print 'Review changelog and check if its up-to-date, if it isn't, then ensure it is updated. If it was up-to-date, then exit 0, if not, then exit 1.' --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools=Edit,ReadFile",
-    "claude:update-docs": "claude --print 'Review all documentation files (README.md, CLAUDE.md, and docs/ directory). Check if they are up-to-date with the current codebase and project state. If any are outdated, ensure they are updated accordingly. If it was up-to-date, then exit 0, if not, then exit 1.' --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools=Edit,ReadFile",
-    "commit": "node scripts/smart-commit.js"
+    "claude:update-changelog": "claude --print \"Review changelog and check if its up-to-date, if it isn't, then ensure it is updated. If it was up-to-date, then exit 0, if not, then exit 1.\" --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools=Edit,ReadFile",
+    "claude:update-docs": "claude --print \"Review all documentation files (README.md, CLAUDE.md, and docs/ directory). Check if they are up-to-date with the current codebase and project state. If any are outdated, ensure they are updated accordingly. If it was up-to-date, then exit 0, if not, then exit 1.\" --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools=Edit,ReadFile",
+    "commit": "node scripts/smart-commit.js",
+    "bump:major": "npm version major --no-git-tag-version",
+    "bump:minor": "npm version minor --no-git-tag-version",
+    "bump:patch": "npm version patch --no-git-tag-version"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",

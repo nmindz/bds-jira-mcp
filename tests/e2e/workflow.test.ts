@@ -523,7 +523,7 @@ describe('JIRA MCP Unit Integration Tests', () => {
     expect(packageJson.name).toBe('jira-mcp');
     expect(packageJson.main).toBe('build/index.js');
     expect(packageJson.bin).toBeDefined();
-    expect(packageJson.bin['jira-mcp']).toBe('./build/index.js');
+    expect(packageJson.bin['jira-mcp']).toBe('build/index.js');
 
     // Verify test scripts are configured
     expect(packageJson.scripts.test).toBeDefined();

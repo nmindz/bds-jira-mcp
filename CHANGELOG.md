@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.5] - 2025-08-08
+
+### Enhanced
+- Improved smart commit workflow automation
+- Enhanced Claude Code integration for changelog and documentation management
+- Refined commit message generation with better JIRA integration
+
+### Technical
+- Updated version consistency across project files
+- Enhanced pre-commit workflow validation
+- Improved build and deployment processes
+
+## [1.3.4] - 2025-08-08
+
+### Added
+- Smart commit workflow functionality with automated JIRA ticket ID extraction
+- Enhanced testing framework for smart commit workflow validation
+- JIRA ticket ID extraction from commit messages and branch names
+- Automated cleanup scripts for development workflow
+
+### Enhanced
+- Smart commit message generation with enhanced Claude Code integration
+- Improved workflow automation for commit and changelog management
+
+### Technical
+- Added comprehensive tests for smart commit functionality
+- Enhanced JIRA integration with smart commit workflow
+- Improved error handling in commit message generation
+
 ## [1.3.1] - 2025-08-08
 
 ### Added
