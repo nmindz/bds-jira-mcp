@@ -20,10 +20,12 @@ A comprehensive Model Context Protocol (MCP) server that provides powerful JIRA 
 - **Project Structure**: Bulk create and validate complete project hierarchies
 - **Status Automation**: Intelligent story status updates based on task completion
 
-### Claude Integration
+### Claude Integration & Development Workflow
 - **Seamless Setup**: Automatic Claude Code CLI and Claude Desktop configuration
 - **Environment Management**: Secure environment variable injection
 - **Interactive Tools**: 13 MCP tools available in Claude conversations
+- **Smart Commit Workflow**: Automatic JIRA ticket ID extraction from branch names
+- **Claude Code Integration**: Automated changelog and documentation updates
 
 ## 📦 Installation
 
@@ -144,6 +146,22 @@ await mcp.call("analyze_story_status", { storyKey: "PROJ-101" });
 await mcp.call("update_story_statuses", { epicKey: "PROJ-100" });
 ```
 
+### Smart Commit Workflow
+```bash
+# Create branch with JIRA ticket ID
+git checkout -b feature/PROJ-123-add-user-authentication
+
+# Use smart commit script (extracts PROJ-123 automatically)
+npm run commit
+# Prompts for commit message and creates structured commit with JIRA reference
+
+# Or manual commit with JIRA integration
+git commit -m "feat: add OAuth2 integration
+
+Implements SSO authentication for enterprise users.
+Addresses requirements in PROJ-123."
+```
+
 ## 🏗️ Development
 
 ### Local Development
@@ -167,6 +185,7 @@ npm test
 - `npm run build` - Compile TypeScript with executables
 - `npm run debug` - Run with debug mode and .env loading  
 - `npm run dev-start` - Development mode with environment loading
+- `npm run commit` - Smart commit with automatic JIRA ticket ID extraction
 - `pnpm run redeploy` - Build and publish to local registry
 
 ### Environment-Based Configuration

@@ -12,8 +12,9 @@
  */
 
 import { spawn, execSync } from 'child_process';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync, unlinkSync, existsSync } from 'fs';
 import { join } from 'path';
+import { tmpdir } from 'os';
 import process from 'process';
 
 const args = process.argv.slice(2);
@@ -81,6 +82,9 @@ function extractJiraTicket(text) {
 async function generateSmartCommitMessage(userMessage, jiraTicket) {
     console.log('\n📝 Generating smart commit message with Claude Code...');
 
+    // Create temporary file for commit message
+    const tempFile = join(tmpdir(), `smart-commit-${Date.now()}.txt`);
+
     const claudePrompt = `Generate a conventional commit message based on: "${userMessage}".
 
 Requirements:
@@ -91,41 +95,58 @@ Requirements:
 - Be concise but descriptive
 - Focus on WHAT changed and WHY
 
+IMPORTANT: Write ONLY the commit message (no explanations, no markdown code blocks) directly to the file: ${tempFile}
+
 Current git status and recent changes are shown below for context.`;
 
     const maxRetries = 3;
     const timeoutMs = 150000; // 2m30s
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        try {
-            console.log(`🔄 Attempt ${attempt}/${maxRetries} to generate commit message with Claude Code...`);
+    try {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔄 Attempt ${attempt}/${maxRetries} to generate commit message with Claude Code...`);
 
-            const result = await Promise.race([
-                runCommand(`claude --print '${claudePrompt.replace(/'/g, "'\\''")}' --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools=ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)`, { silent: false }),
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Claude Code timeout')), timeoutMs)
-                )
-            ]);
+                await Promise.race([
+                    runCommand(`claude --print '${claudePrompt.replace(/'/g, "'\\''")}' --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools='Write,ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)'`, { silent: false }),
+                    new Promise((_, reject) =>
+                        setTimeout(() => reject(new Error('Claude Code timeout')), timeoutMs)
+                    )
+                ]);
 
-            return result.stdout.trim();
-        } catch (error) {
-            if (attempt === maxRetries) {
-                console.warn('⚠️  Claude Code unavailable after 3 attempts, using fallback commit message generation');
-                break;
+                // Read the commit message from the temporary file
+                if (existsSync(tempFile)) {
+                    const commitMessage = readFileSync(tempFile, 'utf8').trim();
+                    if (commitMessage) {
+                        return commitMessage;
+                    }
+                }
+
+                console.warn(`⚠️  Attempt ${attempt} failed: No commit message generated in temp file`);
+            } catch (error) {
+                if (attempt === maxRetries) {
+                    console.warn('⚠️  Claude Code unavailable after 3 attempts, using fallback commit message generation');
+                    break;
+                }
+                console.warn(`⚠️  Attempt ${attempt} failed: ${error.message}. Retrying...`);
             }
-            console.warn(`⚠️  Attempt ${attempt} failed: ${error.message}. Retrying...`);
+        }
+
+        // Fallback commit message generation
+        const type = userMessage.match(/^(feat|fix|docs|style|refactor|test|chore)/) ?
+            userMessage.split(':')[0] : 'chore';
+        const description = userMessage.replace(/^(feat|fix|docs|style|refactor|test|chore):\s*/, '');
+
+        const prefix = jiraTicket ? `${jiraTicket}: ` : '';
+        const firstLine = `${prefix}${type}: ${description}`.substring(0, 50);
+
+        return firstLine;
+    } finally {
+        // Clean up temporary file
+        if (existsSync(tempFile)) {
+            unlinkSync(tempFile);
         }
     }
-
-    // Fallback commit message generation
-    const type = userMessage.match(/^(feat|fix|docs|style|refactor|test|chore)/) ?
-        userMessage.split(':')[0] : 'chore';
-    const description = userMessage.replace(/^(feat|fix|docs|style|refactor|test|chore):\s*/, '');
-
-    const prefix = jiraTicket ? `${jiraTicket}: ` : '';
-    const firstLine = `${prefix}${type}: ${description}`.substring(0, 50);
-
-    return firstLine;
 }
 
 async function main() {
@@ -186,8 +207,11 @@ async function main() {
         try {
             await runCommand(`git commit -m "${escapedMessage}"`);
         } catch (error) {
-            // Pre-commit hooks may have modified files, re-stage and retry
-            if (error.message.includes('files were modified by this hook')) {
+            // Check if pre-commit hooks modified files by checking git status
+            const statusResult = await runCommand('git status --porcelain', { silent: true });
+            const hasUnstagedChanges = statusResult.stdout.trim().includes('M ');
+
+            if (hasUnstagedChanges) {
                 console.log('🔄 Pre-commit hooks modified files, re-staging and retrying...');
                 await runCommand('git add .');
                 await runCommand(`git commit -m "${escapedMessage}"`);
