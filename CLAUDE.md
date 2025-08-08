@@ -1,7 +1,7 @@
 # Claude MCP Development Context
 
 ## Project Overview
-This is a Model Context Protocol (MCP) server project called `jira-mcp` that provides comprehensive JIRA integration and project management capabilities. **Status**: Production-ready and fully functional as of v1.3.0.
+This is a Model Context Protocol (MCP) server project called `jira-mcp` that provides comprehensive JIRA integration and project management capabilities. **Status**: Production-ready and fully functional as of v1.3.1.
 
 ## Original Intent
 The user requested bootstrapping an MCP project in NodeJS according to the official MCP documentation at https://modelcontextprotocol.io/quickstart/server#node. The project evolved to focus on comprehensive JIRA integration and project management capabilities:
@@ -58,7 +58,7 @@ Last updated: 2025-08-08
    - **Path Correction**: Uses correct `~/.claude.json` path for Claude Code CLI
    - **Command Structure**: NPX-based commands instead of filesystem path references
 
-### Tools Provided (15 MCP Tools)
+### Tools Provided (13 MCP Tools)
 **Core JIRA Tools:**
 1. `get_jira_ticket` - Fetch and display ticket details
 2. `post_jira_comment` - Add comments to JIRA tickets
@@ -134,7 +134,7 @@ Last updated: 2025-08-08
 - **MCP Compatibility**: Full STDIO transport support for Claude Code CLI and Claude Desktop
 - **Environment Variables**: Production uses MCP server environment injection, no .env files
 - **Development Support**: Conditional dotenv loading with debug messaging
-- **Version Management**: Currently v1.3.0 with semantic versioning
+- **Version Management**: Currently v1.3.1 with semantic versioning
 
 ## File Structure (Updated)
 ```
@@ -176,8 +176,8 @@ jira-mcp/
 
 ### **Production Readiness Achieved**:
 ✅ **All Core Requirements Fulfilled**
-✅ **15 MCP Tools Implemented and Working**  
-✅ **Published NPM Package (v1.3.0)**
+✅ **13 MCP Tools Implemented and Working**  
+✅ **Published NPM Package (v1.3.1)**
 ✅ **Claude Code and Claude Desktop Integration**
 ✅ **Interactive Setup Tool with JIRA Validation**
 ✅ **Complete JIRA Workflow Automation**

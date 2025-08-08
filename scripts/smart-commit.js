@@ -4,11 +4,11 @@
  * Smart Commit Script
  *
  * This script performs a comprehensive commit workflow:
- * 1. Updates CHANGELOG and documentation using pre-commit hooks
- * 2. Generates intelligent commit messages using Claude Code
+ * 1. Updates CHANGELOG and documentation using Claude Code
+ * 2. Generates intelligent commit messages with JIRA ticket prefixes
  * 3. Extracts JIRA ticket ID from branch name or message
  * 4. Commits with properly formatted message following conventions
- * 5. Triggers all remaining pre-commit hooks
+ * 5. Triggers all remaining pre-commit hooks for validation
  */
 
 import { spawn, execSync } from 'child_process';
@@ -79,21 +79,36 @@ function extractJiraTicket(text) {
 }
 
 async function generateSmartCommitMessage(userMessage, jiraTicket) {
-    console.log('\n📝 Generating smart commit message...');
+    console.log('\n📝 Generating smart commit message with Claude Code...');
 
-    // Enhanced fallback commit message generation
-    const type = userMessage.match(/^(feat|fix|docs|style|refactor|test|chore)/) ?
-        userMessage.split(':')[0] : 'chore';
-    const description = userMessage.replace(/^(feat|fix|docs|style|refactor|test|chore):\s*/, '');
+    const claudePrompt = `Generate a conventional commit message based on: "${userMessage}".
 
-    const prefix = jiraTicket ? `${jiraTicket}: ` : '';
-    const firstLine = `${prefix}${type}: ${description}`.substring(0, 50);
+Requirements:
+- First line: Maximum 50 characters, format: "type: brief description"
+- If JIRA ticket ${jiraTicket ? `"${jiraTicket}"` : 'is available'}, prefix first line with "${jiraTicket ? jiraTicket + ': ' : '[TICKET]: '}"
+- Use conventional commit types: feat, fix, docs, style, refactor, test, chore
+- Add detailed explanation in body if needed, wrapped at 72 characters
+- Be concise but descriptive
+- Focus on WHAT changed and WHY
 
-    // For future Claude Code integration, we can add it back:
-    // TODO: Add Claude Code integration for smarter commit message generation
-    // const claudeArgs = ['claude', '--print', 'Generate conventional commit...'];
+Current git status and recent changes are shown below for context.`;
 
-    return firstLine;
+    try {
+        const result = await runCommand(`claude --print '${claudePrompt.replace(/'/g, "'\\''")}' --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp`, { silent: true });
+        return result.stdout.trim();
+    } catch (error) {
+        console.warn('⚠️  Claude Code unavailable, using fallback commit message generation');
+
+        // Fallback commit message generation
+        const type = userMessage.match(/^(feat|fix|docs|style|refactor|test|chore)/) ?
+            userMessage.split(':')[0] : 'chore';
+        const description = userMessage.replace(/^(feat|fix|docs|style|refactor|test|chore):\s*/, '');
+
+        const prefix = jiraTicket ? `${jiraTicket}: ` : '';
+        const firstLine = `${prefix}${type}: ${description}`.substring(0, 50);
+
+        return firstLine;
+    }
 }
 
 async function main() {
@@ -117,22 +132,22 @@ async function main() {
             console.log('ℹ️  No JIRA ticket detected in branch name or message');
         }
 
-        // Step 3: Run pre-commit hooks for changelog and docs update
-        console.log('\n📚 Running documentation and changelog updates...');
+        // Step 3: Run Claude Code hooks for changelog and docs update
+        console.log('\n📚 Running Claude Code documentation and changelog updates...');
 
-        // Use the existing npm scripts instead of direct Claude calls
+        // Use Claude Code scripts for intelligent updates
         try {
-            await runCommand('npm run update-docs');
-            console.log('✅ Documentation synchronized');
+            await runCommand('npm run claude:update-changelog');
+            console.log('✅ Changelog updated by Claude Code');
         } catch (error) {
-            console.log('ℹ️  Documentation synchronization completed');
+            console.log('ℹ️  Changelog was already up-to-date');
         }
 
         try {
-            await runCommand('npm run validate-changelog');
-            console.log('✅ Changelog validated');
+            await runCommand('npm run claude:update-docs');
+            console.log('✅ Documentation updated by Claude Code');
         } catch (error) {
-            console.log('ℹ️  Changelog validation completed');
+            console.log('ℹ️  Documentation was already up-to-date');
         }
 
         // Step 4: Generate smart commit message

@@ -7,11 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.1] - 2025-08-08
+
+### Added
+- Claude Code integration for smart commit workflow
+- Enhanced commit message generation using Claude Code
+- Intelligent changelog and documentation updates via Claude Code scripts
+
+### Changed
+- Updated smart-commit.js to use claude:update-changelog and claude:update-docs scripts
+- Enhanced generateSmartCommitMessage function with Claude Code integration
+- Improved JIRA markup conversion to eliminate placeholder artifacts
+
+### Fixed
+- Fixed JIRA text formatting placeholders (___JIRA_ITALIC___, ___END_ITALIC___)
+- Improved markdown to JIRA markup conversion logic
+- Enhanced error handling for Claude Code unavailability scenarios
+
 ## [1.3.0] - 2025-08-08
 
 ### Added
 - Initial release of comprehensive JIRA MCP server
-- 15 MCP tools for complete JIRA workflow automation
+- 13 MCP tools for complete JIRA workflow automation
 - Interactive setup tool for Claude Code CLI and Desktop integration
 - JIRA API integration with REST API v2/v3 support
 - Epic-story-task hierarchy management with automated linking
