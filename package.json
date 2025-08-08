@@ -1,0 +1,76 @@
+{
+  "name": "jira-mcp",
+  "version": "1.3.0",
+  "description": "Model Context Protocol (MCP) server for JIRA workflow automation - manages issue linking, epic hierarchies, and automates story status updates",
+  "keywords": [
+    "mcp",
+    "jira",
+    "workflow",
+    "automation",
+    "issue-tracking",
+    "claude",
+    "model-context-protocol"
+  ],
+  "author": "Evandro Camargo",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/evandrocamargo/jira-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/evandrocamargo/jira-mcp/issues"
+  },
+  "homepage": "https://github.com/evandrocamargo/jira-mcp#readme",
+  "type": "module",
+  "main": "build/index.js",
+  "bin": {
+    "jira-mcp": "./build/index.js",
+    "jira-mcp-setup": "./build/setup.js",
+    "jira-mcp-reconfigure": "./build/reconfigure.js"
+  },
+  "scripts": {
+    "build": "tsc && chmod +x build/index.js && chmod +x build/setup.js && chmod +x build/reconfigure.js",
+    "dev": "DEBUG=true tsc --watch",
+    "debug": "DEBUG=true ENVIRONMENT=development node build/index.js",
+    "setup": "node build/setup.js",
+    "pack": "npm run build && npm pack",
+    "redeploy": "npm run build && npm publish --registry http://localhost:4873/",
+    "publish": "npm run build && npm run test:ci && npm run validate-changelog && npm publish",
+    "update-docs": "node scripts/update-docs.js",
+    "validate-changelog": "node scripts/validate-changelog.js",
+    "test": "jest",
+    "test:unit": "jest tests/unit",
+    "test:e2e": "jest tests/e2e",
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "commit": "node scripts/smart-commit.js",
+    "postinstall": "echo '\nTo setup jira-mcp with Claude Code/Desktop, run: npx jira-mcp-setup\n'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.5.0",
+    "zod": "^3.25.36"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.0.5",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^22.10.2",
+    "jest": "^30.0.5",
+    "pre-commit": "^1.2.2",
+    "ts-jest": "^29.4.1",
+    "typescript": "^5.7.2"
+  },
+  "files": [
+    "build",
+    "scripts"
+  ],
+  "pre-commit": [
+    "update-docs",
+    "validate-changelog",
+    "build",
+    "test:unit"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

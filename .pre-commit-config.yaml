@@ -1,0 +1,59 @@
+repos:
+  # Local hooks for project-specific validations
+  - repo: local
+    hooks:
+      # TypeScript compilation and build verification
+      - id: typescript-build
+        name: TypeScript Build
+        entry: npm run build
+        language: system
+        always_run: true
+        pass_filenames: false
+
+      # Documentation synchronization
+      - id: update-docs
+        name: Update documentation automatically
+        entry: npm run update-docs
+        language: system
+        always_run: true
+        pass_filenames: false
+
+      # Changelog validation
+      - id: validate-changelog
+        name: Validate CHANGELOG.md format and entries
+        entry: npm run validate-changelog
+        language: system
+        always_run: true
+        pass_filenames: false
+
+      # Unit tests
+      - id: unit-tests
+        name: Run unit tests
+        entry: npm run test:unit
+        language: system
+        always_run: true
+        pass_filenames: false
+
+  # Standard pre-commit hooks (simplified)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # File format and quality checks
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: ['--maxkb=500']
+
+      # Security checks
+      - id: detect-private-key
+      - id: check-executables-have-shebangs
+
+# Configuration
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: '2.20.0'

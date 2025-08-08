@@ -1,0 +1,97 @@
+# JIRA-MCP Cursor Rules
+
+## Project Overview
+This is a Model Context Protocol (MCP) server that provides comprehensive JIRA integration for issue management and project automation. The project uses TypeScript with ESM modules, publishes to NPM, and provides MCP tools for Claude Code/Desktop integration.
+
+## Code Style & Architecture
+- Use TypeScript with strict mode enabled
+- ESM modules only (import/export, not require)
+- Prefer async/await over promises
+- Use Zod for input validation in MCP tools
+- Follow conventional commit message format
+- Keep functions focused and modular
+
+## Key Patterns to Follow
+1. **MCP Tool Registration**: Always use `server.registerTool()` pattern
+2. **Service Initialization**: Services use lazy initialization with `initialize()` method
+3. **Error Handling**: Wrap service calls in try/catch with user-friendly error messages
+4. **Environment Variables**: Use conditional dotenv loading for development only
+5. **JIRA API**: Prefer REST API v2 for compatibility, v3 for linking features
+
+## File Structure Understanding
+- `src/index.ts` - Main MCP server with tool registrations
+- `src/services/jira.ts` - JIRA API integration with lazy initialization
+- `src/setup.ts` - Interactive setup tool for Claude integration
+- `build/` - TypeScript compilation output with executable permissions
+
+## Development Workflow
+- Use `npm run build` to compile TypeScript
+- Use `npm run debug` or `ENVIRONMENT=development` for .env loading
+- Use `pnpm run redeploy` to build and publish to localhost registry
+- Test with `npx jira-mcp --help` or `npx jira-mcp setup`
+
+## MCP Tool Implementation Guidelines
+```typescript
+server.registerTool(
+  "tool_name",
+  {
+    title: "Human Readable Title",
+    description: "Clear description of what this tool does",
+    inputSchema: {
+      param: z.string().describe("Parameter description"),
+    },
+  },
+  async ({ param }) => {
+    try {
+      const result = await getJiraService().someMethod(param);
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result, null, 2),
+          },
+        ],
+      };
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  }
+);
+```
+
+## JIRA Integration Best Practices
+- Always validate environment variables in service initialization
+- Use proper JIRA markup formatting with `formatJiraText()` helper
+- Handle authentication errors gracefully with user-friendly messages
+- Implement epic-story-task hierarchy using parent field relationships
+- Use issue linking for task relationships and traceability
+
+## Testing & Deployment
+- Build before testing: `npm run build`
+- Test locally with environment variables set
+- Use localhost NPM registry for testing: `--registry http://localhost:4873/`
+- Version bump required for republishing
+- Setup tool should work with `npx jira-mcp setup`
+
+## Common Pitfalls to Avoid
+- Don't use `__dirname` in ESM modules (use `fileURLToPath(import.meta.url)`)
+- Don't instantiate services at module level (breaks help commands)
+- Don't load .env in production (use conditional loading)
+- Don't use deprecated MCP SDK methods
+- Always handle JIRA API rate limits and errors
+- Clean up JIRA markup placeholders in formatJiraText() helper
+- Ensure lazy initialization is called in all service methods
+
+## Documentation Standards
+- Keep README.md updated with current tool count and features
+- Update CLAUDE.md with architectural decisions and solved challenges
+- Maintain comprehensive Cursor rules for project consistency
+- Include proper license information (Apache 2.0)
