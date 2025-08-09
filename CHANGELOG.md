@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.2] - 2025-08-08
 
+### Added
+- Comprehensive test suite and setup validation for smart commit workflow
+
 ### Fixed
+- Newline escaping issues in smart commit messages  
 - Enhanced smart commit pre-commit hook handling with better error management
 - Improved package configuration validation and build process
 - Updated documentation for better clarity and consistency
