@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Centralized error handler utility for consistent JIRA API error messaging
+- New `errorHandler.ts` module in utils directory
+
+### Changed
+- Refactored JIRA service to use centralized error handling
+- Improved error message consistency across all JIRA operations
+- Test suite cleanup and project structure improvements
+
+### Fixed
+- Smart commit script hanging issue by adding `process.exit(0)`
+
 ## [1.1.2] - 2025-01-08
 
 ### Changed

@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from "axios";
+import { handleJiraApiError } from "../utils/errorHandler.js";
 
 export interface JiraTicket {
   key: string;
@@ -126,22 +127,21 @@ export class JiraService {
     this.initialized = true;
   }
 
+  private validateProjectKey(providedKey?: string): string {
+    const projectKey = providedKey || process.env.JIRA_PROJECT_KEY;
+    if (!projectKey) {
+      throw new Error("Project key is required. Either provide it in the request or set JIRA_PROJECT_KEY environment variable.");
+    }
+    return projectKey;
+  }
+
   async getTicket(ticketId: string): Promise<JiraTicket> {
     this.initialize();
     try {
       const response = await this.client!.get(`/issue/${ticketId}`);
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw new Error(`JIRA ticket ${ticketId} not found`);
-        }
-        if (error.response?.status === 401) {
-          throw new Error("JIRA authentication failed. Check your credentials.");
-        }
-        throw new Error(`JIRA API error: ${error.response?.status} ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to fetch JIRA ticket: ${error}`);
+      handleJiraApiError(error, { operation: "fetch JIRA ticket", ticketId });
     }
   }
 
@@ -152,16 +152,7 @@ export class JiraService {
         body: JiraService.formatJiraText(comment),
       });
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw new Error(`JIRA ticket ${ticketId} not found`);
-        }
-        if (error.response?.status === 401) {
-          throw new Error("JIRA authentication failed. Check your credentials.");
-        }
-        throw new Error(`JIRA API error: ${error.response?.status} ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to add comment to JIRA ticket: ${error}`);
+      handleJiraApiError(error, { operation: "add comment to JIRA ticket", ticketId });
     }
   }
 
@@ -174,10 +165,7 @@ export class JiraService {
         },
       });
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`Failed to update ticket status: ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to update ticket status: ${error}`);
+      handleJiraApiError(error, { operation: "update ticket status" });
     }
   }
 
@@ -187,10 +175,7 @@ export class JiraService {
       const response = await this.client!.get(`/issue/${ticketId}/transitions`);
       return response.data.transitions;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`Failed to get available transitions: ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to get available transitions: ${error}`);
+      handleJiraApiError(error, { operation: "get available transitions" });
     }
   }
 
@@ -198,10 +183,7 @@ export class JiraService {
     this.initialize();
     try {
       // Use provided project key or default from environment
-      const projectKey = request.projectKey || process.env.JIRA_PROJECT_KEY;
-      if (!projectKey) {
-        throw new Error("Project key is required. Either provide it in the request or set JIRA_PROJECT_KEY environment variable.");
-      }
+      const projectKey = this.validateProjectKey(request.projectKey);
 
       // Build the issue creation payload
       const issuePayload: any = {
@@ -235,21 +217,12 @@ export class JiraService {
       const createdTicket = await this.getTicket(response.data.key);
       return createdTicket;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 400) {
-          const errorMessages = error.response.data?.errors || error.response.data?.errorMessages || [];
-          const errorDetails = Object.entries(errorMessages).map(([field, message]) => `${field}: ${message}`).join(', ');
-          throw new Error(`Invalid ticket data: ${errorDetails || error.response.statusText}`);
+      handleJiraApiError(error, {
+        operation: "create JIRA ticket",
+        customMessages: {
+          403: "Insufficient permissions to create tickets in this project."
         }
-        if (error.response?.status === 401) {
-          throw new Error("JIRA authentication failed. Check your credentials.");
-        }
-        if (error.response?.status === 403) {
-          throw new Error("Insufficient permissions to create tickets in this project.");
-        }
-        throw new Error(`JIRA API error: ${error.response?.status} ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to create JIRA ticket: ${error}`);
+      });
     }
   }
 
@@ -261,10 +234,7 @@ export class JiraService {
       const response = await this.v3Client!.get('/issueLinkType');
       return response.data.issueLinkTypes;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`Failed to fetch link types: ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to fetch link types: ${error}`);
+      handleJiraApiError(error, { operation: "fetch link types" });
     }
   }
 
@@ -285,17 +255,13 @@ export class JiraService {
 
       await this.v3Client!.post('/issueLink', linkPayload);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw new Error(`One or both issues not found: ${request.fromIssue}, ${request.toIssue}`);
+      handleJiraApiError(error, {
+        operation: "link issues",
+        issueKeys: [request.fromIssue, request.toIssue],
+        customMessages: {
+          400: "Invalid link request"
         }
-        if (error.response?.status === 400) {
-          const errorMessage = error.response.data?.errorMessages?.[0] || error.response.statusText;
-          throw new Error(`Invalid link request: ${errorMessage}`);
-        }
-        throw new Error(`JIRA API error: ${error.response?.status} ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to link issues: ${error}`);
+      });
     }
   }
 
@@ -305,13 +271,7 @@ export class JiraService {
       const response = await this.v3Client!.get(`/issue/${ticketId}?fields=issuelinks`);
       return response.data.fields.issuelinks || [];
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw new Error(`JIRA ticket ${ticketId} not found`);
-        }
-        throw new Error(`JIRA API error: ${error.response?.status} ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to get issue links: ${error}`);
+      handleJiraApiError(error, { operation: "get issue links", ticketId });
     }
   }
 
@@ -328,40 +288,16 @@ export class JiraService {
 
       await this.client!.put(`/issue/${issueKey}`, updatePayload);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw new Error(`Issue ${issueKey} or Epic ${epicKey} not found`);
+      handleJiraApiError(error, {
+        operation: "set epic link",
+        issueKeys: [issueKey, epicKey],
+        customMessages: {
+          400: "Invalid parent link"
         }
-        if (error.response?.status === 400) {
-          const errorMessage = error.response.data?.errorMessages?.[0] || error.response.statusText;
-          throw new Error(`Invalid parent link: ${errorMessage}`);
-        }
-        throw new Error(`JIRA API error: ${error.response?.status} ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to set epic link: ${error}`);
+      });
     }
   }
 
-  async removeEpicLink(issueKey: string): Promise<void> {
-    this.initialize();
-    try {
-      const updatePayload = {
-        fields: {
-          parent: null
-        }
-      };
-
-      await this.client!.put(`/issue/${issueKey}`, updatePayload);
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw new Error(`Issue ${issueKey} not found`);
-        }
-        throw new Error(`JIRA API error: ${error.response?.status} ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to remove epic link: ${error}`);
-    }
-  }
 
   async getEpicIssues(epicKey: string): Promise<JiraTicket[]> {
     this.initialize();
@@ -372,10 +308,7 @@ export class JiraService {
       });
       return response.data.issues;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`Failed to get epic issues: ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to get epic issues: ${error}`);
+      handleJiraApiError(error, { operation: "get epic issues" });
     }
   }
 
@@ -387,10 +320,7 @@ export class JiraService {
   }> {
     this.initialize();
     try {
-      const project = projectKey || process.env.JIRA_PROJECT_KEY;
-      if (!project) {
-        throw new Error("Project key is required");
-      }
+      const project = this.validateProjectKey(projectKey);
 
       // Create the epic first
       const epic = await this.createTicket({
@@ -490,27 +420,6 @@ export class JiraService {
     }
   }
 
-  // Helper method to discover epic link field ID
-  async discoverEpicLinkField(): Promise<string> {
-    this.initialize();
-    try {
-      const response = await this.client!.get('/field');
-      const epicField = response.data.find((field: any) =>
-        field.name === 'Epic Link' || field.name.toLowerCase().includes('epic')
-      );
-
-      if (epicField) {
-        this.epicLinkField = epicField.id;
-        return epicField.id;
-      }
-
-      // Fallback to common default
-      return 'customfield_10014';
-    } catch (error) {
-      console.warn('Failed to discover epic link field, using default');
-      return 'customfield_10014';
-    }
-  }
 
   // Update ticket description
   async updateTicketDescription(ticketId: string, description: string): Promise<void> {
@@ -524,13 +433,7 @@ export class JiraService {
 
       await this.client!.put(`/issue/${ticketId}`, updatePayload);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        if (error.response?.status === 404) {
-          throw new Error(`JIRA ticket ${ticketId} not found`);
-        }
-        throw new Error(`JIRA API error: ${error.response?.status} ${error.response?.statusText}`);
-      }
-      throw new Error(`Failed to update ticket description: ${error}`);
+      handleJiraApiError(error, { operation: "update ticket description", ticketId });
     }
   }
 
