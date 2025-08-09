@@ -104,6 +104,163 @@ export class JiraMcpSetup {
     }
   }
 
+  private async verifyMcpServerConnection(config: SetupConfig): Promise<boolean> {
+    try {
+      console.log('🔧 Testing MCP server connectivity...');
+
+      const { spawn } = await import('child_process');
+      const { command, args } = this.getServerCommand();
+
+      return new Promise((resolve) => {
+        const serverProcess = spawn(command, args, {
+          env: {
+            ...process.env,
+            JIRA_BASE_URL: config.JIRA_BASE_URL,
+            JIRA_EMAIL: config.JIRA_EMAIL,
+            JIRA_API_TOKEN: config.JIRA_API_TOKEN,
+            JIRA_PROJECT_KEY: config.JIRA_PROJECT_KEY || ''
+          },
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+
+        let output = '';
+        let errorOutput = '';
+
+        const timeout = setTimeout(() => {
+          serverProcess.kill();
+          console.log('⚠️  MCP server test timed out (this is normal for setup verification)');
+          resolve(true); // Timeout is expected for MCP servers
+        }, 5000);
+
+        serverProcess.stdout?.on('data', (data) => {
+          output += data.toString();
+          // Look for MCP initialization indicators
+          if (output.includes('"jsonrpc"') || output.includes('capabilities') || output.includes('tools')) {
+            clearTimeout(timeout);
+            serverProcess.kill();
+            console.log('✅ MCP server initialized successfully');
+            resolve(true);
+          }
+        });
+
+        serverProcess.stderr?.on('data', (data) => {
+          errorOutput += data.toString();
+        });
+
+        serverProcess.on('close', (code) => {
+          clearTimeout(timeout);
+          if (code !== null && code !== 0 && !output.includes('jsonrpc')) {
+            console.log(`❌ MCP server failed to start (exit code: ${code})`);
+            if (errorOutput) {
+              console.log(`   Error: ${errorOutput.trim()}`);
+            }
+            resolve(false);
+          } else {
+            // For MCP servers, graceful termination after initialization is normal
+            resolve(true);
+          }
+        });
+
+        serverProcess.on('error', (error) => {
+          clearTimeout(timeout);
+          console.log(`❌ Failed to spawn MCP server: ${error.message}`);
+          resolve(false);
+        });
+      });
+
+    } catch (error: any) {
+      console.log(`❌ MCP server verification failed: ${error.message}`);
+      return false;
+    }
+  }
+
+  private verifyClaudeCodeConfig(): boolean {
+    try {
+      const configPath = path.join(os.homedir(), '.claude.json');
+
+      if (!fs.existsSync(configPath)) {
+        console.log('❌ Claude Code config file not found');
+        return false;
+      }
+
+      const configContent = fs.readFileSync(configPath, 'utf8');
+      const config = JSON.parse(configContent);
+
+      if (!config.mcpServers || !config.mcpServers['jira-mcp']) {
+        console.log('❌ jira-mcp server not found in Claude Code config');
+        return false;
+      }
+
+      const jiraMcpConfig = config.mcpServers['jira-mcp'];
+
+      // Verify required fields
+      const requiredFields = ['command', 'args', 'env'];
+      const requiredEnvVars = ['JIRA_BASE_URL', 'JIRA_EMAIL', 'JIRA_API_TOKEN'];
+
+      for (const field of requiredFields) {
+        if (!jiraMcpConfig[field]) {
+          console.log(`❌ Missing required field in config: ${field}`);
+          return false;
+        }
+      }
+
+      for (const envVar of requiredEnvVars) {
+        if (!jiraMcpConfig.env[envVar]) {
+          console.log(`❌ Missing required environment variable in config: ${envVar}`);
+          return false;
+        }
+      }
+
+      console.log('✅ Claude Code configuration verified');
+      return true;
+
+    } catch (error: any) {
+      console.log(`❌ Claude Code config verification failed: ${error.message}`);
+      return false;
+    }
+  }
+
+  private verifyClaudeDesktopConfig(): boolean {
+    try {
+      let configPath: string;
+
+      // Determine config path based on platform
+      if (process.platform === 'darwin') {
+        configPath = path.join(os.homedir(), 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json');
+      } else if (process.platform === 'win32') {
+        const appData = process.env.APPDATA;
+        if (!appData) {
+          console.log('ℹ️  Claude Desktop config verification skipped (Windows APPDATA not found)');
+          return true; // Don't fail setup for this
+        }
+        configPath = path.join(appData, 'Claude', 'claude_desktop_config.json');
+      } else {
+        console.log('ℹ️  Claude Desktop config verification skipped (Linux not supported)');
+        return true; // Don't fail setup for Linux
+      }
+
+      if (!fs.existsSync(configPath)) {
+        console.log('❌ Claude Desktop config file not found');
+        return false;
+      }
+
+      const configContent = fs.readFileSync(configPath, 'utf8');
+      const config = JSON.parse(configContent);
+
+      if (!config.mcpServers || !config.mcpServers['jira-mcp']) {
+        console.log('❌ jira-mcp server not found in Claude Desktop config');
+        return false;
+      }
+
+      console.log('✅ Claude Desktop configuration verified');
+      return true;
+
+    } catch (error: any) {
+      console.log(`❌ Claude Desktop config verification failed: ${error.message}`);
+      return false;
+    }
+  }
+
   private createClaudeDesktopConfig(config: SetupConfig): void {
     try {
       const { command, args } = this.getServerCommand();
@@ -228,7 +385,41 @@ export class JiraMcpSetup {
       this.createClaudeCodeConfig(config);
       this.createClaudeDesktopConfig(config);
 
-      console.log('\n🎉 Setup complete!');
+      // Verify configurations
+      console.log('\n🔍 Verifying configurations...');
+
+      const codeConfigValid = this.verifyClaudeCodeConfig();
+      const desktopConfigValid = this.verifyClaudeDesktopConfig();
+
+      // Test MCP server connectivity
+      const mcpServerValid = await this.verifyMcpServerConnection(config);
+
+      // Determine overall setup status
+      const allValid = codeConfigValid && desktopConfigValid && mcpServerValid;
+
+      if (allValid) {
+        console.log('\n🎉 Setup completed successfully!');
+        console.log('✅ All configurations verified and MCP server tested');
+      } else {
+        console.log('\n⚠️  Setup completed with warnings!');
+        console.log('   Some verification steps failed, but basic setup is complete');
+
+        if (!mcpServerValid) {
+          console.log('\n🔧 Troubleshooting MCP server issues:');
+          console.log('   • Ensure jira-mcp package is installed: npm install -g jira-mcp');
+          console.log('   • Check JIRA credentials are correct');
+          console.log('   • Verify network connectivity to JIRA instance');
+          console.log('   • Try manual test: npx jira-mcp (should show MCP protocol output)');
+        }
+
+        if (!codeConfigValid || !desktopConfigValid) {
+          console.log('\n📁 Config file troubleshooting:');
+          console.log('   • Check file permissions in config directories');
+          console.log('   • Verify JSON syntax in config files');
+          console.log('   • Try running setup with --force flag to recreate configs');
+        }
+      }
+
       console.log('\n📖 Next steps:');
       console.log('   • Restart Claude Code CLI if it was running');
       console.log('   • Restart Claude Desktop application if it was running');

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.2] - 2025-08-08
+
+### Fixed
+- Enhanced smart commit pre-commit hook handling with better error management
+- Improved package configuration validation and build process
+- Updated documentation for better clarity and consistency
+
+### Changed
+- Refined smart commit workflow for better Claude Code integration
+- Enhanced JIRA service stability and error handling
+
+## [1.1.1] - 2025-08-08
+
+### Fixed
+- Improved smart commit pre-commit hook handling
+- Enhanced package configuration and validation
+- Test expectations alignment with npm package corrections
+
 ## [1.1.0] - 2025-08-08
 
 ### Added

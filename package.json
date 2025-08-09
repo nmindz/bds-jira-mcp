@@ -1,6 +1,6 @@
 {
   "name": "jira-mcp",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "Model Context Protocol (MCP) server for JIRA workflow automation - manages issue linking, epic hierarchies, and automates story status updates",
   "keywords": [
     "mcp",
@@ -35,7 +35,8 @@
     "setup": "node build/setup.js",
     "pack": "npm run build && npm pack",
     "redeploy": "npm run build && npm unpublish jira-mcp --registry http://localhost:4873/ --force || true && npm publish --registry http://localhost:4873/",
-    "publish": "npm run build && npm run test:ci && npm run validate-changelog && npm publish",
+    "publish:local": "npm run build && npm run test:ci && npm run validate-changelog && npm publish --registry http://localhost:4873/",
+    "publish:npm": "npm run build && npm run test:ci && npm run validate-changelog && npm publish",
     "update-docs": "node scripts/update-docs.js",
     "validate-changelog": "node scripts/validate-changelog.js",
     "test": "jest",
@@ -43,8 +44,8 @@
     "test:e2e": "jest tests/e2e",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "postinstall": "echo '\nTo setup jira-mcp with Claude Code/Desktop, run: npx jira-mcp-setup\n'",
-    "claude:update-changelog": "claude --print \"Review changelog and check if its up-to-date, if it isn't, then ensure it is updated. If it was up-to-date, then exit 0, if not, then exit 1.\" --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools='Edit,ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)'",
-    "claude:update-docs": "claude --print \"Review all documentation files (README.md, CLAUDE.md, and docs/ directory). Check if they are up-to-date with the current codebase and project state. If any are outdated, ensure they are updated accordingly. If it was up-to-date, then exit 0, if not, then exit 1.\" --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools='Edit,ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)'",
+    "claude:update-changelog": "claude --print \"Review changelog and check if its up-to-date, if it isn't, then ensure it is updated.\" --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools='Edit,ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)'",
+    "claude:update-docs": "claude --print \"Review all documentation files (README.md, CLAUDE.md, and docs/ directory). Check if they are up-to-date with the current codebase and project state. If any are outdated, ensure they are updated accordingly.\" --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools='Edit,ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)'",
     "commit": "node scripts/smart-commit.js",
     "bump:major": "npm version major --no-git-tag-version",
     "bump:minor": "npm version minor --no-git-tag-version",
