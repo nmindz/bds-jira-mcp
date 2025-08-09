@@ -1,4 +1,4 @@
-# Source Code Context - jira-mcp/src
+# Source Code Context - bds-jira-mcp/src
 
 ## Directory Overview
 This directory contains the core TypeScript source code for the JIRA MCP server implementation.
@@ -14,12 +14,12 @@ This directory contains the core TypeScript source code for the JIRA MCP server 
 ### `setup.ts` - Interactive Configuration
 - **Purpose**: Command-line setup tool for Claude integration
 - **Features**: Environment validation, Claude Code CLI and Desktop configuration
-- **Usage**: `npx jira-mcp setup` or `npm run setup`
+- **Usage**: `npx bds-jira-mcp-setup` or `npm run setup`
 - **Output**: Creates/updates `.claude.json` and platform-specific MCP configs
 
 ### `reconfigure.ts` - Environment Reconfiguration
 - **Purpose**: Updates environment variables without full setup
-- **Usage**: `npx jira-mcp-reconfigure` for quick config updates
+- **Usage**: `npx bds-jira-mcp-reconfigure` for quick config updates
 - **Scope**: Modifies existing environment files and Claude configurations
 
 ## MCP Tool Implementation Pattern
@@ -110,7 +110,7 @@ DEBUG=true npm run dev-start
 
 # Build and test
 npm run build
-npx jira-mcp --help
+npx bds-jira-mcp --help
 ```
 
 ## Common Pitfalls

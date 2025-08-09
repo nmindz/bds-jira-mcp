@@ -1,4 +1,4 @@
-# Services Context - jira-mcp/src/services
+# Services Context - bds-jira-mcp/src/services
 
 ## Directory Overview
 This directory contains service layer implementations for external API integrations and core business logic.

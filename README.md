@@ -40,16 +40,50 @@
 
 ## 📦 Installation
 
-### Quick Start
+### Installation Methods
+
+#### 1. From NPM (Recommended)
 ```bash
 # Install globally
 npm install -g bds-jira-mcp
-
-# Or install from local registry
-npm install --registry http://localhost:4873/ bds-jira-mcp
+# or
+pnpm add -g bds-jira-mcp
 
 # Run interactive setup
-npx bds-jira-mcp setup
+npx bds-jira-mcp-setup
+```
+
+#### 2. From GitHub Releases
+Download the latest release from [GitHub Releases](https://github.com/nmindz/bds-jira-mcp/releases):
+
+**Option A: Install Package Tarball**
+```bash
+# Download the .tgz file from releases
+npm install -g ./bds-jira-mcp-1.1.2.tgz
+```
+
+**Option B: Use Pre-built Archive**
+```bash
+# Download and extract the build archive
+tar -xzf bds-jira-mcp-build-v1.1.2.tar.gz
+cd build/
+node index.js
+```
+
+#### 3. From Source
+```bash
+# Clone the repository
+git clone https://github.com/nmindz/bds-jira-mcp.git
+cd bds-jira-mcp
+
+# Install dependencies
+pnpm install
+
+# Build the project
+pnpm run build
+
+# Run setup
+node build/setup.js
 ```
 
 ### Requirements
@@ -261,6 +295,51 @@ cat ~/.claude.json  # Claude Code CLI
 - Check the [troubleshooting guide](.cursor/rules/troubleshooting.md)
 - Review [development documentation](CLAUDE.md)
 - Open an issue for bugs or feature requests
+
+## 🚀 Releases & CI/CD
+
+### Automated Release Process
+
+This project uses GitHub Actions for automated releases. When a new version is pushed to the `master` branch:
+
+1. **Automatic NPM Publishing**: The package is automatically published to NPM
+2. **GitHub Release Creation**: A release is created with downloadable assets
+3. **Release Assets**: Each release includes:
+   - **Package Tarball** (`.tgz`): Ready-to-install NPM package
+   - **Build Archive** (`.tar.gz`): Pre-compiled TypeScript build
+   - **Source Code**: Automatic GitHub source archives
+
+### Release Workflow
+
+```bash
+# 1. Bump version
+pnpm run bump:patch  # or bump:minor, bump:major
+
+# 2. Commit and push
+git add package.json
+git commit -m "chore: bump version to 1.1.3"
+git push origin master
+
+# 3. Create and push tag
+git tag -a v1.1.3 -m "Release v1.1.3"
+git push origin v1.1.3
+```
+
+The CI/CD pipeline will automatically:
+- ✅ Build and test the code
+- ✅ Publish to NPM (if version is new)
+- ✅ Create GitHub release with assets
+- ✅ Generate release notes from changelog
+
+### Available Release Assets
+
+Each GitHub release provides multiple installation options:
+
+| Asset | Description | Use Case |
+|-------|-------------|----------|
+| `bds-jira-mcp-{version}.tgz` | NPM package tarball | Local/offline installation |
+| `bds-jira-mcp-build-v{version}.tar.gz` | Pre-built TypeScript | Direct execution without npm |
+| Source code (zip/tar.gz) | Complete source | Development/customization |
 
 ## 🚀 Roadmap
 

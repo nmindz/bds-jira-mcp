@@ -1,0 +1,348 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  release:
+    types: [published]
+
+env:
+  NODE_VERSION: '18'
+  REGISTRY_URL: 'https://registry.npmjs.org'
+
+jobs:
+  # Job 1: Build and Test
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run build
+        run: pnpm run build
+
+      - name: Run tests
+        run: pnpm run test:ci
+        env:
+          # Mock JIRA credentials for CI testing
+          JIRA_BASE_URL: https://test-company.atlassian.net
+          JIRA_EMAIL: test@example.com
+          JIRA_API_TOKEN: test-token-123
+          JIRA_PROJECT_KEY: TEST
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts
+          path: |
+            build/
+            package.json
+            README.md
+            LICENSE
+          retention-days: 7
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports
+          path: coverage/
+          retention-days: 7
+
+  # Job 2: Version Check and Publish (only on main/master branch)
+  publish:
+    name: Check Version and Publish to NPM
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    environment: production
+    
+    outputs:
+      version-changed: ${{ steps.version-check.outputs.version-changed }}
+      current-version: ${{ steps.version-check.outputs.current-version }}
+      published: ${{ steps.publish.outputs.published }}
+      tarball-name: ${{ steps.pack.outputs.tarball-name }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: ${{ env.REGISTRY_URL }}
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: latest
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+
+      - name: Extract current version
+        id: current-version
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "📦 Current package version: $CURRENT_VERSION"
+
+      - name: Check if version exists on NPM
+        id: version-check
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          
+          echo "🔍 Checking if $PACKAGE_NAME@$CURRENT_VERSION exists on NPM..."
+          
+          # Check if version exists on NPM
+          if npm view "$PACKAGE_NAME@$CURRENT_VERSION" version 2>/dev/null; then
+            echo "⚠️  Version $CURRENT_VERSION already exists on NPM"
+            echo "version-changed=false" >> $GITHUB_OUTPUT
+            echo "skip-publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ Version $CURRENT_VERSION is new and ready for publishing"
+            echo "version-changed=true" >> $GITHUB_OUTPUT
+            echo "skip-publish=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies (for publishing)
+        if: steps.version-check.outputs.skip-publish == 'false'
+        run: pnpm install --frozen-lockfile --prod
+
+      - name: Create package tarball
+        if: steps.version-check.outputs.skip-publish == 'false'
+        run: |
+          echo "📦 Creating package tarball..."
+          pnpm pack
+          
+          # Find the created tarball
+          TARBALL=$(ls *.tgz | head -1)
+          echo "tarball-name=$TARBALL" >> $GITHUB_OUTPUT
+          echo "✅ Created tarball: $TARBALL"
+        id: pack
+
+      - name: Publish to NPM
+        id: publish
+        if: steps.version-check.outputs.skip-publish == 'false'
+        run: |
+          echo "🚀 Publishing ${{ steps.current-version.outputs.current-version }} to NPM..."
+          
+          # Publish the package
+          pnpm publish --access public --no-git-checks
+          
+          echo "✅ Successfully published to NPM!"
+          echo "published=true" >> $GITHUB_OUTPUT
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Upload package tarball
+        if: steps.version-check.outputs.skip-publish == 'false'
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-tarball
+          path: "*.tgz"
+          retention-days: 30
+
+      - name: Skip publish notification
+        if: steps.version-check.outputs.skip-publish == 'true'
+        run: |
+          echo "⏭️  Skipping publish - version ${{ steps.current-version.outputs.current-version }} already exists on NPM"
+
+  # Job 3: Create GitHub Release (only if published to NPM)
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [build-and-test, publish]
+    if: needs.publish.outputs.published == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: ./artifacts/build
+
+      - name: Download package tarball
+        uses: actions/download-artifact@v4
+        with:
+          name: package-tarball
+          path: ./artifacts/package
+
+      - name: Extract changelog for current version
+        id: changelog
+        run: |
+          VERSION="${{ needs.publish.outputs.current-version }}"
+          echo "📝 Extracting changelog for version $VERSION"
+          
+          # Extract changelog section for current version
+          if [ -f CHANGELOG.md ]; then
+            # Try to extract the section for this version from CHANGELOG.md
+            CHANGELOG_CONTENT=$(awk "/^## \[$VERSION\]/ {flag=1; next} /^## \[/ && flag {flag=0} flag" CHANGELOG.md || echo "")
+            
+            if [ -z "$CHANGELOG_CONTENT" ]; then
+              CHANGELOG_CONTENT="Release $VERSION - See CHANGELOG.md for details"
+            fi
+          else
+            CHANGELOG_CONTENT="Release $VERSION"
+          fi
+          
+          # Save to output (handle multiline)
+          echo "changelog-content<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Prepare release assets
+        run: |
+          echo "📦 Preparing release assets..."
+          
+          # Create release directory
+          mkdir -p release-assets
+          
+          # Copy package tarball
+          if [ -f "./artifacts/package/"*.tgz ]; then
+            cp "./artifacts/package/"*.tgz ./release-assets/
+            echo "✅ Package tarball added to release assets"
+          fi
+          
+          # Create build archive
+          cd artifacts/build
+          tar -czf ../../release-assets/bds-jira-mcp-build-v${{ needs.publish.outputs.current-version }}.tar.gz build/ package.json README.md LICENSE 2>/dev/null || tar -czf ../../release-assets/bds-jira-mcp-build-v${{ needs.publish.outputs.current-version }}.tar.gz build/ package.json README.md
+          cd ../..
+          
+          echo "✅ Build archive created"
+          
+          # List all assets
+          echo "📋 Release assets:"
+          ls -la release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.publish.outputs.current-version }}
+          name: Release v${{ needs.publish.outputs.current-version }}
+          body: |
+            🎉 **bds-jira-mcp v${{ needs.publish.outputs.current-version }}** has been released!
+            
+            📦 **NPM Package**: https://www.npmjs.com/package/bds-jira-mcp/v/${{ needs.publish.outputs.current-version }}
+            
+            ## 📥 Installation Options
+            
+            ### From NPM (Recommended)
+            ```bash
+            npm install -g bds-jira-mcp@${{ needs.publish.outputs.current-version }}
+            # or
+            pnpm add -g bds-jira-mcp@${{ needs.publish.outputs.current-version }}
+            ```
+            
+            ### From Release Assets (Local Installation)
+            1. Download the `.tgz` package from the assets below
+            2. Install locally:
+               ```bash
+               npm install -g ./bds-jira-mcp-${{ needs.publish.outputs.current-version }}.tgz
+               ```
+            
+            ### From Source (Build Archive)
+            1. Download the build archive from the assets below
+            2. Extract and run:
+               ```bash
+               tar -xzf bds-jira-mcp-build-v${{ needs.publish.outputs.current-version }}.tar.gz
+               cd build/
+               node index.js
+               ```
+            
+            ## 🚀 Setup
+            
+            After installation, run the setup command:
+            ```bash
+            npx bds-jira-mcp-setup
+            ```
+            
+            ## 📋 Changes
+            
+            ${{ steps.changelog.outputs.changelog-content }}
+            
+            ## 📦 Release Assets
+            
+            - **Package Tarball** (`.tgz`): Ready-to-install npm package
+            - **Build Archive** (`.tar.gz`): Pre-compiled TypeScript build with all dependencies
+            - **Source Code** (`.zip`, `.tar.gz`): Complete source code with build scripts
+          files: |
+            release-assets/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Job 4: Notification Summary
+  notify:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [build-and-test, publish, create-release]
+    if: always() && (needs.build-and-test.result == 'success' || needs.build-and-test.result == 'failure')
+    
+    steps:
+      - name: Pipeline Summary
+        run: |
+          echo "# 📋 CI/CD Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Build and Test Status
+          if [ "${{ needs.build-and-test.result }}" == "success" ]; then
+            echo "✅ **Build & Test**: Passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Build & Test**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Publish Status
+          if [ "${{ needs.publish.result }}" == "success" ]; then
+            if [ "${{ needs.publish.outputs.published }}" == "true" ]; then
+              echo "🚀 **Publish**: Successfully published v${{ needs.publish.outputs.current-version }} to NPM" >> $GITHUB_STEP_SUMMARY
+              echo "📦 **NPM**: https://www.npmjs.com/package/bds-jira-mcp/v/${{ needs.publish.outputs.current-version }}" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⏭️  **Publish**: Skipped (version already exists)" >> $GITHUB_STEP_SUMMARY
+            fi
+          elif [ "${{ needs.publish.result }}" == "failure" ]; then
+            echo "❌ **Publish**: Failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️  **Publish**: Skipped (not main/master branch)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Release Status
+          if [ "${{ needs.create-release.result }}" == "success" ]; then
+            echo "🏷️  **GitHub Release**: Created v${{ needs.publish.outputs.current-version }}" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.create-release.result }}" == "failure" ]; then
+            echo "❌ **GitHub Release**: Failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️  **GitHub Release**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
