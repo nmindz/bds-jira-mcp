@@ -5,6 +5,8 @@
 
 import { jest } from '@jest/globals';
 import dotenv from 'dotenv';
+import http from 'http';
+import https from 'https';
 
 // Global test environment setup
 beforeAll(() => {
@@ -27,6 +29,28 @@ beforeAll(() => {
 afterAll(() => {
   // Clean up any global resources
   jest.restoreAllMocks();
+  
+  // Force close any open HTTP agent connections
+  // Using imported modules instead of require for consistency
+  
+  if (http.globalAgent) {
+    http.globalAgent.destroy();
+  }
+  if (https.globalAgent) {
+    https.globalAgent.destroy();
+  }
+  
+  // Force close Axios default timeout and connections
+  try {
+    const axios = require('axios');
+    if (axios.defaults.adapter) {
+      // Reset axios defaults
+      axios.defaults.timeout = 0;
+      axios.defaults.adapter = null;
+    }
+  } catch (e) {
+    // Ignore cleanup errors
+  }
 });
 
 // Global test configuration

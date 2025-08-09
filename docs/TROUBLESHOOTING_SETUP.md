@@ -1,6 +1,6 @@
-# JIRA MCP Setup Troubleshooting Guide
+# BDS JIRA MCP Setup Troubleshooting Guide
 
-This comprehensive guide helps diagnose and resolve common issues during JIRA MCP setup and Claude Code integration.
+This comprehensive guide helps diagnose and resolve common issues during BDS JIRA MCP (formerly jira-mcp) setup and Claude Code integration.
 
 ## Table of Contents
 
@@ -16,13 +16,15 @@ This comprehensive guide helps diagnose and resolve common issues during JIRA MC
 ### Health Check Commands
 ```bash
 # 1. Test MCP server directly
-npx jira-mcp
+npx bds-jira-mcp
+# Or for older installations: npx jira-mcp
 
 # 2. Verify package installation  
-npm list -g jira-mcp
+npm list -g bds-jira-mcp
+# Or for older installations: npm list -g jira-mcp
 
 # 3. Check Claude Code config
-cat ~/.claude.json | jq '.mcpServers["jira-mcp"]'
+cat ~/.claude.json | jq '.mcpServers["bds-jira-mcp"]'
 
 # 4. Test JIRA connection
 curl -u "your-email:your-api-token" \
@@ -31,7 +33,7 @@ curl -u "your-email:your-api-token" \
 
 ### Expected Outputs
 - **MCP Server**: Should output JSON-RPC messages like `{"jsonrpc":"2.0","method":"initialize"}`
-- **Package List**: Should show `jira-mcp@x.x.x`
+- **Package List**: Should show `bds-jira-mcp@x.x.x` (or `jira-mcp@x.x.x` for older installations)
 - **Config Check**: Should show complete server configuration
 - **JIRA Test**: Should return your user information
 
@@ -65,13 +67,15 @@ curl -s -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
 ### 3. MCP Integration Verification
 ```bash
 # Run setup with verification
-npx jira-mcp-setup
+npx bds-jira-mcp-setup
+# Or for older installations: npx bds-jira-mcp-setup
 
 # Check setup logs for verification results
 # ✅ = Success, ❌ = Failed, ⚠️ = Warning
 
 # Manual config verification
-npx jira-mcp-setup --force --verify-only
+npx bds-jira-mcp-setup --force --verify-only
+# Or: npx bds-jira-mcp-setup --force --verify-only
 ```
 
 ## Common Issues
@@ -119,7 +123,7 @@ curl -I "https://your-company.atlassian.net"
 
 # 3. Check corporate proxy/firewall
 export HTTPS_PROXY=http://your-proxy:8080
-npx jira-mcp-setup
+npx bds-jira-mcp-setup
 ```
 
 ### MCP Server Verification Fails
@@ -133,12 +137,15 @@ npx jira-mcp-setup
 
 #### Package Not Found (ENOENT)
 ```bash
-# 1. Install globally
-npm install -g jira-mcp
+# 1. Install globally (latest)
+npm install -g bds-jira-mcp
 
 # 2. Or use local installation
-npm install jira-mcp
-npx jira-mcp
+npm install bds-jira-mcp
+npx bds-jira-mcp
+
+# For older installations:
+# npm install -g jira-mcp
 
 # 3. Check npm registry
 npm config get registry
@@ -148,7 +155,7 @@ npm ping
 #### Server Start Failure
 ```bash
 # 1. Test with debug output
-DEBUG=true npx jira-mcp
+DEBUG=true npx bds-jira-mcp
 
 # 2. Check environment variables
 env | grep JIRA_
@@ -157,7 +164,7 @@ env | grep JIRA_
 JIRA_BASE_URL="https://test.atlassian.net" \
 JIRA_EMAIL="test@example.com" \
 JIRA_API_TOKEN="test-token" \
-npx jira-mcp
+npx bds-jira-mcp
 ```
 
 #### Timeout Issues
@@ -166,7 +173,7 @@ npx jira-mcp
 # They start, initialize, then wait for input
 
 # Verify by checking for MCP output:
-timeout 5 npx jira-mcp | head -1
+timeout 5 npx bds-jira-mcp | head -1
 # Should show: {"jsonrpc":"2.0",...}
 ```
 
@@ -188,7 +195,7 @@ ls -la ~/.claude.json
 echo '{"mcpServers":{}}' > ~/.claude.json
 
 # 3. Run setup again
-npx jira-mcp-setup --force
+npx bds-jira-mcp-setup --force
 ```
 
 #### Config Syntax Errors
@@ -201,18 +208,18 @@ cat ~/.claude.json | jq empty
 
 # 3. Use setup to recreate
 mv ~/.claude.json ~/.claude.json.backup
-npx jira-mcp-setup
+npx bds-jira-mcp-setup
 ```
 
 #### Missing Fields
 ```bash
 # Check required structure
-cat ~/.claude.json | jq '.mcpServers["jira-mcp"]'
+cat ~/.claude.json | jq '.mcpServers["bds-jira-mcp"]'
 
 # Should contain:
 # {
 #   "command": "npx",
-#   "args": ["jira-mcp"],
+#   "args": ["bds-jira-mcp"],
 #   "env": {
 #     "JIRA_BASE_URL": "...",
 #     "JIRA_EMAIL": "...",
@@ -302,7 +309,7 @@ setx PATH "%PATH%;%APPDATA%\npm"
 echo "ℹ️ Claude Desktop setup skipped (Linux not supported)"
 
 # Focus on Claude Code CLI only
-npx jira-mcp-setup --cli-only
+npx bds-jira-mcp-setup --cli-only
 ```
 
 ## Advanced Troubleshooting
@@ -310,7 +317,7 @@ npx jira-mcp-setup --cli-only
 ### Debug Mode Setup
 ```bash
 # Enable debug logging
-DEBUG=true npx jira-mcp-setup
+DEBUG=true npx bds-jira-mcp-setup
 
 # Check debug output for:
 # - Environment variable loading
@@ -326,9 +333,9 @@ If automated setup fails, create configurations manually:
 ```json
 {
   "mcpServers": {
-    "jira-mcp": {
+    "bds-jira-mcp": {
       "command": "npx",
-      "args": ["jira-mcp"],
+      "args": ["bds-jira-mcp"],
       "env": {
         "JIRA_BASE_URL": "https://your-company.atlassian.net",
         "JIRA_EMAIL": "your-email@company.com",
@@ -347,9 +354,9 @@ If automated setup fails, create configurations manually:
 ```json
 {
   "mcpServers": {
-    "jira-mcp": {
+    "bds-jira-mcp": {
       "command": "npx",
-      "args": ["jira-mcp"],
+      "args": ["bds-jira-mcp"],
       "env": {
         "JIRA_BASE_URL": "https://your-company.atlassian.net",
         "JIRA_EMAIL": "your-email@company.com",
@@ -373,7 +380,7 @@ npm config set https-proxy http://proxy.company.com:8080
 git config --global http.proxy http://proxy.company.com:8080
 
 # Test with proxy
-HTTPS_PROXY=http://proxy.company.com:8080 npx jira-mcp-setup
+HTTPS_PROXY=http://proxy.company.com:8080 npx bds-jira-mcp-setup
 ```
 
 #### SSL Certificate Issues
@@ -396,14 +403,14 @@ npm config set registry https://registry.npmmirror.com
 npm cache clean --force
 
 # Use yarn as alternative
-yarn global add jira-mcp
+yarn global add bds-jira-mcp
 ```
 
 ## Error Code Reference
 
 | Code | Description | Common Cause | Solution |
 |------|-------------|---------------|----------|
-| ENOENT | Command not found | Package not installed | `npm install -g jira-mcp` |
+| ENOENT | Command not found | Package not installed | `npm install -g bds-jira-mcp` |
 | EACCES | Permission denied | File permissions | Fix permissions or use sudo |
 | 401 | Unauthorized | Invalid API token | Regenerate JIRA API token |
 | 403 | Forbidden | Insufficient JIRA permissions | Contact JIRA administrator |
@@ -415,7 +422,7 @@ yarn global add jira-mcp
 
 After troubleshooting, verify your setup works:
 
-- [ ] `npx jira-mcp` outputs MCP protocol messages
+- [ ] `npx bds-jira-mcp` outputs MCP protocol messages
 - [ ] `~/.claude.json` contains valid jira-mcp configuration
 - [ ] Claude Desktop config exists (if using Desktop)
 - [ ] JIRA connection test passes: `curl -u email:token jira-url/rest/api/2/myself`
@@ -428,7 +435,7 @@ After troubleshooting, verify your setup works:
 
 1. **Run Diagnostics:**
    ```bash
-   npx jira-mcp-setup --diagnose 2>&1 | tee setup-diagnostics.log
+   npx bds-jira-mcp-setup --diagnose 2>&1 | tee setup-diagnostics.log
    ```
 
 2. **Gather System Information:**
@@ -436,7 +443,7 @@ After troubleshooting, verify your setup works:
    echo "OS: $(uname -a)"
    echo "Node: $(node --version)"
    echo "npm: $(npm --version)"
-   echo "Package: $(npm list -g jira-mcp)"
+   echo "Package: $(npm list -g bds-jira-mcp)"
    ```
 
 3. **Check Recent Logs:**
@@ -450,7 +457,7 @@ After troubleshooting, verify your setup works:
 
 ### Support Channels
 
-1. **GitHub Issues:** [https://github.com/nmindz/jira-mcp/issues](https://github.com/nmindz/jira-mcp/issues)
+1. **GitHub Issues:** [https://github.com/nmindz/bds-jira-mcp/issues](https://github.com/nmindz/bds-jira-mcp/issues)
 2. **Documentation:** [README.md](../README.md) and [CLAUDE.md](../CLAUDE.md)
 3. **Community:** Claude AI Discord/Forums
 
@@ -461,7 +468,7 @@ After troubleshooting, verify your setup works:
 - OS: [macOS/Windows/Linux version]
 - Node.js: [version]
 - npm: [version]
-- jira-mcp: [version]
+- bds-jira-mcp: [version] (or jira-mcp for older installations)
 
 ## Issue Description
 [Describe the problem]
@@ -479,7 +486,7 @@ After troubleshooting, verify your setup works:
 
 ## Diagnostics Output
 ```
-npx jira-mcp-setup --diagnose
+npx bds-jira-mcp-setup --diagnose
 [Paste output here]
 ```
 

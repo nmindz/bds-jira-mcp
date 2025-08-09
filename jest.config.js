@@ -3,23 +3,28 @@ export default {
   // Test environment
   testEnvironment: 'node',
 
-  // TypeScript support
-  preset: 'ts-jest',
+  // TypeScript support - use default preset with ESM support
+  preset: 'ts-jest/presets/default-esm',
 
   // Module resolution
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 
-  // Transform configuration
+  // Transform configuration for ESM
   transform: {
-    '^.+\\.tsx?$': ['ts-jest', {
-      tsconfig: {
-        module: 'CommonJS',
-        target: 'ES2020'
-      }
+    '^.+\\.[tj]s$': ['ts-jest', {
+      useESM: true
     }]
   },
+
+  // ESM support
+  extensionsToTreatAsEsm: ['.ts'],
+
+  // Transform ignore patterns
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$))'
+  ],
 
   // Test file patterns
   testMatch: [
@@ -30,21 +35,9 @@ export default {
   // Coverage configuration
   collectCoverageFrom: [
     'src/**/*.ts',
-    '!src/**/*.d.ts',
-    '!src/**/index.ts',
-    '!src/setup.ts',
-    '!src/reconfigure.ts'
+    '!src/**/*.d.ts'
   ],
 
-  // Coverage thresholds (disabled for initial implementation)
-  // coverageThreshold: {
-  //   global: {
-  //     branches: 30,
-  //     functions: 40,
-  //     lines: 50,
-  //     statements: 50
-  //   }
-  // },
 
   // Test setup
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
@@ -54,6 +47,15 @@ export default {
 
   // Clear mocks between tests
   clearMocks: true,
+  
+  // Force exit after tests complete
+  forceExit: true,
+  
+  // Resource management
+  detectOpenHandles: false,
+  
+  // Max workers to prevent resource conflicts
+  maxWorkers: 1,
 
   // Verbose output
   verbose: true

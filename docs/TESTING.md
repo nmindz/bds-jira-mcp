@@ -1,6 +1,6 @@
 # Testing Strategy for JIRA MCP
 
-This document outlines the comprehensive testing strategy implemented for the jira-mcp project using Jest as the primary testing framework.
+This document outlines the comprehensive testing strategy implemented for the bds-jira-mcp project (formerly jira-mcp) using Jest as the primary testing framework.
 
 ## Overview
 
@@ -367,4 +367,4 @@ pre-commit run --all-files
 
 ---
 
-This testing strategy ensures high code quality, reliability, and maintainability for the jira-mcp project while providing comprehensive coverage of all major functionality and edge cases.
+This testing strategy ensures high code quality, reliability, and maintainability for the bds-jira-mcp project while providing comprehensive coverage of all major functionality and edge cases.

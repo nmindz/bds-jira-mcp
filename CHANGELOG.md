@@ -7,10 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.2] - 2025-08-08
+## [1.1.2] - 2025-01-08
+
+### Changed
+- **BREAKING**: Package name changed from `jira-mcp` to `bds-jira-mcp`
+- **BREAKING**: Binary executables renamed with `bds-` prefix:
+  - `jira-mcp` → `bds-jira-mcp`
+  - `jira-mcp-setup` → `bds-jira-mcp-setup`
+  - `jira-mcp-reconfigure` → `bds-jira-mcp-reconfigure`
+- Repository references updated to reflect new GitHub organization
+- Package management scripts migrated from npm to pnpm
+- Help text and CLI messages updated to reflect new package name
 
 ### Added
-- Comprehensive test suite and setup validation for smart commit workflow
+- Project logo (logo.svg)
+- Comprehensive test suite restructuring with new unit tests for core modules
+- Unit tests for index.ts and jira-service modules
+- Enhanced test organization with dedicated setup configuration
+- Improved test coverage and validation for smart commit workflow
 
 ### Fixed
 - Newline escaping issues in smart commit messages  
@@ -22,14 +36,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refined smart commit workflow for better Claude Code integration
 - Enhanced JIRA service stability and error handling
 
-## [1.1.1] - 2025-08-08
+## [1.1.1] - 2025-01-08
 
 ### Fixed
 - Improved smart commit pre-commit hook handling
 - Enhanced package configuration and validation
 - Test expectations alignment with npm package corrections
 
-## [1.1.0] - 2025-08-08
+## [1.1.0] - 2025-01-08
 
 ### Added
 - Smart commit workflow with automatic JIRA ticket ID extraction from branch names
@@ -46,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test expectations after npm package corrections
 - Smart commit workflow edge cases and error handling
 
-## [1.0.1] - 2025-08-08
+## [1.0.1] - 2025-01-08
 
 ### Added
 - Initial release of comprehensive JIRA MCP server

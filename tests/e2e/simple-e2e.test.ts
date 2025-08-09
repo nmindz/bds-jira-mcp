@@ -3,7 +3,7 @@
  * Tests basic JIRA connectivity with real credentials
  */
 
-import { describe, expect, test, beforeAll } from '@jest/globals';
+import { describe, expect, test, beforeAll, afterAll } from '@jest/globals';
 import axios from 'axios';
 
 describe('JIRA MCP Simple E2E Tests', () => {
@@ -23,6 +23,21 @@ describe('JIRA MCP Simple E2E Tests', () => {
       baseURL = process.env.JIRA_BASE_URL!;
     } else {
       console.log('⚠️  No real JIRA credentials - E2E tests will be skipped');
+    }
+  });
+
+  afterAll(async () => {
+    // Force cleanup of any HTTP connections
+    try {
+      // Force close any open connections
+      if (axios.defaults.httpsAgent) {
+        axios.defaults.httpsAgent.destroy();
+      }
+      if (axios.defaults.httpAgent) {
+        axios.defaults.httpAgent.destroy();
+      }
+    } catch (e) {
+      // Ignore cleanup errors
     }
   });
 

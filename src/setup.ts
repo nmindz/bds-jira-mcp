@@ -56,8 +56,8 @@ export class JiraMcpSetup {
     // Always use npx to ensure we get the published package
     return {
       command: 'npx',
-      args: ['jira-mcp'],
-      serverPath: 'jira-mcp'
+      args: ['bds-jira-mcp'],
+      serverPath: 'bds-jira-mcp'
     };
   }
 

@@ -1,7 +1,7 @@
 # Claude MCP Development Context
 
 ## Project Overview
-This is a Model Context Protocol (MCP) server project called `jira-mcp` that provides comprehensive JIRA integration and project management capabilities. **Status**: Production-ready and fully functional as of v1.1.2.
+This is a Model Context Protocol (MCP) server project called `bds-jira-mcp` (formerly `jira-mcp`) that provides comprehensive JIRA integration and project management capabilities. **Status**: Production-ready and fully functional as of v1.1.2.
 
 ## Original Intent
 The user requested bootstrapping an MCP project in NodeJS according to the official MCP documentation at https://modelcontextprotocol.io/quickstart/server#node. The project evolved to focus on comprehensive JIRA integration and project management capabilities:
@@ -26,6 +26,7 @@ Last updated: 2025-08-09
 
 ### Development Guidelines
 - No longer update the current package version in either changelog or package.json without explicit directions to do so
+- We're still using PNPM. Don't change that.
 
 ### Architecture Decisions
 - **Language**: TypeScript with Node.js ESM modules
@@ -35,4 +36,7 @@ Last updated: 2025-08-09
 - **Environment Management**: Conditional dotenv loading for development (DEBUG=true or ENVIRONMENT=development)
 - **Service Pattern**: Lazy initialization to prevent premature environment variable validation
 
-[... rest of the existing content remains unchanged ...]
+### Package Naming Considerations
+- Internally, only the package name needs to be bds-jira-mcp due to a same package name conflict in NPM.js
+- However, we don't need to rename functions like JiraMcpSetup to BdsJiraMcpSetup. Keep this in mind.
+- Since the BINARIES can still have name conflicts depending on the user environment, we're also renaming binaries to bds-jira-mcp

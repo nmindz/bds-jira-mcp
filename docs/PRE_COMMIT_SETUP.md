@@ -1,6 +1,6 @@
 # Pre-commit Framework Setup Guide
 
-This document explains the comprehensive pre-commit workflow implemented for the jira-mcp project.
+This document explains the comprehensive pre-commit workflow implemented for the bds-jira-mcp project.
 
 ## Overview
 

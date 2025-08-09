@@ -1,5 +1,5 @@
 {
-  "name": "jira-mcp",
+  "name": "bds-jira-mcp",
   "version": "1.1.2",
   "description": "Model Context Protocol (MCP) server for JIRA workflow automation - manages issue linking, epic hierarchies, and automates story status updates",
   "keywords": [
@@ -15,18 +15,18 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nmindz/jira-mcp.git"
+    "url": "git+https://github.com/nmindz/bds-jira-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/nmindz/jira-mcp/issues"
+    "url": "https://github.com/nmindz/bds-jira-mcp/issues"
   },
-  "homepage": "https://github.com/nmindz/jira-mcp#readme",
+  "homepage": "https://github.com/nmindz/bds-jira-mcp#readme",
   "type": "module",
   "main": "build/index.js",
   "bin": {
-    "jira-mcp": "build/index.js",
-    "jira-mcp-setup": "build/setup.js",
-    "jira-mcp-reconfigure": "build/reconfigure.js"
+    "bds-jira-mcp": "build/index.js",
+    "bds-jira-mcp-setup": "build/setup.js",
+    "bds-jira-mcp-reconfigure": "build/reconfigure.js"
   },
   "scripts": {
     "build": "tsc && chmod +x build/index.js && chmod +x build/setup.js && chmod +x build/reconfigure.js",
@@ -34,16 +34,20 @@
     "debug": "DEBUG=true ENVIRONMENT=development node build/index.js",
     "setup": "node build/setup.js",
     "pack": "npm run build && npm pack",
-    "redeploy": "npm run build && npm unpublish jira-mcp --registry http://localhost:4873/ --force || true && npm publish --registry http://localhost:4873/",
-    "publish:local": "npm run build && npm run test:ci && npm run validate-changelog && npm publish --registry http://localhost:4873/",
-    "publish:npm": "npm run build && npm run test:ci && npm run validate-changelog && npm publish",
+    "redeploy": "pnpm run build && pnpm publish --registry http://localhost:4873/",
+    "publish:local": "pnpm run build && pnpm run test:ci && pnpm run validate-changelog && pnpm publish --registry http://localhost:4873/",
+    "publish:npm": "pnpm run build && pnpm run test:ci && pnpm run validate-changelog && pnpm publish",
     "update-docs": "node scripts/update-docs.js",
     "validate-changelog": "node scripts/validate-changelog.js",
-    "test": "jest",
-    "test:unit": "jest tests/unit",
-    "test:e2e": "jest tests/e2e",
-    "test:ci": "jest --ci --coverage --watchAll=false",
-    "postinstall": "echo '\nTo setup jira-mcp with Claude Code/Desktop, run: npx jira-mcp-setup\n'",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test:unit": "NODE_OPTIONS='--experimental-vm-modules' jest tests/unit",
+    "test:integration": "NODE_OPTIONS='--experimental-vm-modules' jest tests/integration",
+    "test:e2e": "NODE_OPTIONS='--experimental-vm-modules' jest tests/e2e",
+    "test:mock": "NODE_OPTIONS='--experimental-vm-modules' jest tests/e2e/mock-workflow.test.ts",
+    "test:ci": "NODE_OPTIONS='--experimental-vm-modules' jest tests/unit tests/e2e/mock-workflow.test.ts --ci --coverage --watchAll=false",
+    "test:all": "NODE_OPTIONS='--experimental-vm-modules' jest --ci --coverage --watchAll=false",
+    "test:detect-leaks": "NODE_OPTIONS='--experimental-vm-modules' jest --detectOpenHandles --ci --coverage --watchAll=false",
+    "postinstall": "echo '\nTo setup bds-jira-mcp with Claude Code/Desktop, run: npx bds-jira-mcp-setup\n'",
     "claude:update-changelog": "claude --print \"Review changelog and check if its up-to-date, if it isn't, then ensure it is updated.\" --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools='Edit,ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)'",
     "claude:update-docs": "claude --print \"Review all documentation files (README.md, CLAUDE.md, and docs/ directory). Check if they are up-to-date with the current codebase and project state. If any are outdated, ensure they are updated accordingly.\" --add-dir=/Users/evandrocamargo/Projects/me/jira-mcp --permission-mode=acceptEdits --allowedTools='Edit,ReadFile,Bash(git status:*),Bash(git branch:*),Bash(git log:*)'",
     "commit": "node scripts/smart-commit.js",

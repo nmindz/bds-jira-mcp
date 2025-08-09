@@ -32,7 +32,7 @@ const __dirname = path.dirname(__filename);
 ## Configuration Management
 ### Claude Code CLI Integration
 - Use `~/.claude.json` (NOT `~/.config/claude/claude_config.json`)
-- Command should be `npx`, args should be `["jira-mcp"]`
+- Command should be `npx`, args should be `["bds-jira-mcp"]`
 - Include environment variables in MCP server configuration
 
 ### Claude Desktop Integration  

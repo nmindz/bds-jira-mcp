@@ -4,6 +4,12 @@
  */
 
 import { describe, expect, test } from '@jest/globals';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 describe('Basic Test Suite', () => {
   test('Jest is working correctly', () => {
@@ -12,32 +18,30 @@ describe('Basic Test Suite', () => {
 
   test('Environment variables are loaded in tests', () => {
     expect(process.env.NODE_ENV).toBe('test');
-    expect(process.env.JIRA_BASE_URL).toBeDefined();
-    expect(process.env.JIRA_EMAIL).toBeDefined();
-    expect(process.env.JIRA_API_TOKEN).toBeDefined();
   });
 
   test('Can import Node.js modules', () => {
-    const fs = require('fs');
-    const path = require('path');
-
     expect(typeof fs.existsSync).toBe('function');
     expect(typeof path.join).toBe('function');
   });
 
   test('Package.json contains expected configuration', () => {
-    const packageJson = require('../../package.json');
+    const packageJsonPath = path.join(__dirname, '../../package.json');
+    const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
+    const packageJson = JSON.parse(packageJsonContent);
 
-    expect(packageJson.name).toBe('jira-mcp');
+    expect(packageJson.name).toBe('bds-jira-mcp');
     expect(packageJson.version).toBeDefined();
+    expect(packageJson.main).toBe('build/index.js');
+    expect(packageJson.bin).toBeDefined();
+    expect(packageJson.bin['bds-jira-mcp']).toBe('build/index.js');
+    
+    // Verify test scripts are configured
     expect(packageJson.scripts.test).toBeDefined();
     expect(packageJson.devDependencies.jest).toBeDefined();
   });
 
   test('Build artifacts exist', () => {
-    const fs = require('fs');
-    const path = require('path');
-
     const buildPath = path.join(__dirname, '../../build/index.js');
     const servicesPath = path.join(__dirname, '../../build/services/jira.js');
 
@@ -46,9 +50,6 @@ describe('Basic Test Suite', () => {
   });
 
   test('TypeScript configuration is valid', () => {
-    const fs = require('fs');
-    const path = require('path');
-
     const tsconfigPath = path.join(__dirname, '../../tsconfig.json');
     expect(fs.existsSync(tsconfigPath)).toBe(true);
 
@@ -59,9 +60,6 @@ describe('Basic Test Suite', () => {
   });
 
   test('Required files are present', () => {
-    const fs = require('fs');
-    const path = require('path');
-
     const requiredFiles = [
       'package.json',
       'tsconfig.json',

@@ -1,10 +1,21 @@
-# JIRA MCP Server
-
-A comprehensive Model Context Protocol (MCP) server that provides powerful JIRA integration and project management capabilities for Claude Code CLI and Claude Desktop.
-
-[![NPM Version](https://img.shields.io/npm/v/jira-mcp)](https://www.npmjs.com/package/jira-mcp)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+<div align="center">
+  <img src="logo.svg" alt="JIRA MCP Logo" width="200" height="200" />
+  
+  # JIRA MCP Server
+  
+  A comprehensive Model Context Protocol (MCP) server that provides powerful JIRA integration and project management capabilities for Claude Code CLI and Claude Desktop.
+  
+  [![NPM Version](https://img.shields.io/npm/v/bds-jira-mcp)](https://www.npmjs.com/package/bds-jira-mcp)
+  [![License: Apache-2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+  [![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+  [![Jest](https://img.shields.io/badge/Jest-30.0-red.svg)](https://jestjs.io/)
+  [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
+  [![Coverage](https://img.shields.io/badge/coverage-80%25-green.svg)](#)
+  [![MCP Tools](https://img.shields.io/badge/MCP%20Tools-13-blue.svg)](#-available-tools)
+  [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
+  
+</div>
 
 ## 🚀 Features
 
@@ -32,13 +43,13 @@ A comprehensive Model Context Protocol (MCP) server that provides powerful JIRA 
 ### Quick Start
 ```bash
 # Install globally
-npm install -g jira-mcp
+npm install -g bds-jira-mcp
 
 # Or install from local registry
-npm install --registry http://localhost:4873/ jira-mcp
+npm install --registry http://localhost:4873/ bds-jira-mcp
 
 # Run interactive setup
-npx jira-mcp setup
+npx bds-jira-mcp setup
 ```
 
 ### Requirements
@@ -168,7 +179,7 @@ Addresses requirements in PROJ-123."
 ```bash
 # Clone and install
 git clone <repository-url>
-cd jira-mcp
+cd bds-jira-mcp
 npm install
 
 # Development with .env loading
@@ -187,6 +198,8 @@ npm test
 - `npm run dev-start` - Development mode with environment loading
 - `npm run commit` - Smart commit with automatic JIRA ticket ID extraction
 - `pnpm run redeploy` - Build and publish to local registry
+- `npm run claude:update-changelog` - Automated changelog review and update with Claude
+- `npm run claude:update-docs` - Automated documentation review and update with Claude
 
 ### Environment-Based Configuration
 The server uses conditional environment loading:
@@ -237,7 +250,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 curl -u email@company.com:api-token https://company.atlassian.net/rest/api/2/myself
 
 # Debug mode
-DEBUG=true npx jira-mcp --help
+DEBUG=true npx bds-jira-mcp --help
 
 # Verify Claude configuration
 cat ~/.claude.json  # Claude Code CLI
@@ -258,13 +271,12 @@ cat ~/.claude.json  # Claude Code CLI
 - Claude Code CLI and Desktop integration
 - Interactive setup and configuration
 
-### Planned 🎯
-- Webhook integration for real-time updates
-- Custom dashboards and reporting
+### Planned (Maybe) 🎯
 - Advanced field mapping and templates
 - Multi-instance JIRA support
 - Enhanced search and filtering
 
 ---
 
-**Built with ❤️ for efficient JIRA project management through Claude AI**
+**Built with ❤️ by @nmindz**
+(yes I used AI tools)
