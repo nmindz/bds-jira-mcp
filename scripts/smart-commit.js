@@ -202,10 +202,13 @@ async function main() {
 
         // Step 6: Commit with the generated message (this triggers remaining pre-commit hooks)
         console.log('\n💾 Committing changes...');
-        const escapedMessage = commitMessage.replace(/"/g, '\\"').replace(/\n/g, '\\n');
+
+        // Create temporary commit message file to handle multiline messages properly
+        const commitMsgFile = join(tmpdir(), `commit-msg-${Date.now()}.txt`);
+        writeFileSync(commitMsgFile, commitMessage);
 
         try {
-            await runCommand(`git commit -m "${escapedMessage}"`);
+            await runCommand(`git commit -F "${commitMsgFile}"`);
         } catch (error) {
             // Check if pre-commit hooks modified files by checking git status
             const statusResult = await runCommand('git status --porcelain', { silent: true });
@@ -214,9 +217,14 @@ async function main() {
             if (hasUnstagedChanges) {
                 console.log('🔄 Pre-commit hooks modified files, re-staging and retrying...');
                 await runCommand('git add .');
-                await runCommand(`git commit -m "${escapedMessage}"`);
+                await runCommand(`git commit -F "${commitMsgFile}"`);
             } else {
                 throw error;
+            }
+        } finally {
+            // Clean up commit message file
+            if (existsSync(commitMsgFile)) {
+                unlinkSync(commitMsgFile);
             }
         }
 
