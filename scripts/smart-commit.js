@@ -234,6 +234,8 @@ async function main() {
         console.log('- Push when ready: git push');
         console.log('- Publish release: npm run publish');
 
+        process.exit(0);
+
     } catch (error) {
         console.error('\n❌ Smart commit failed:', error.message);
 
