@@ -108,8 +108,8 @@ test-install/
 
 # Package manager lock files (keep the one you're using)
 # Uncomment the ones you want to ignore:
-# package-lock.json
-# yarn.lock
+package-lock.json
+yarn.lock
 # pnpm-lock.yaml
 
 # Local configuration files
