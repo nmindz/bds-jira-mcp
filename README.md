@@ -59,13 +59,13 @@ Download the latest release from [GitHub Releases](https://github.com/nmindz/bds
 **Option A: Install Package Tarball**
 ```bash
 # Download the .tgz file from releases
-npm install -g ./bds-jira-mcp-1.1.2.tgz
+npm install -g ./bds-jira-mcp-1.1.3.tgz
 ```
 
 **Option B: Use Pre-built Archive**
 ```bash
 # Download and extract the build archive
-tar -xzf bds-jira-mcp-build-v1.1.2.tar.gz
+tar -xzf bds-jira-mcp-build-v1.1.3.tar.gz
 cd build/
 node index.js
 ```
@@ -311,6 +311,27 @@ This project uses GitHub Actions for automated releases. When a new version is p
 
 ### Release Workflow
 
+#### Automated Release (Recommended)
+```bash
+# 1. Bump version
+pnpm run bump:patch  # or bump:minor, bump:major
+
+# 2. Commit the version change
+git add package.json
+git commit -m "chore: bump version to 1.1.3"
+
+# 3. Run the release script (handles tagging & pushing)
+pnpm run release
+```
+
+The `release` script will:
+- ✅ Verify you're on the master branch
+- ✅ Check for uncommitted changes
+- ✅ Pull latest changes from origin
+- ✅ Create an annotated tag with the current version
+- ✅ Push both master branch and tag to origin
+
+#### Manual Release
 ```bash
 # 1. Bump version
 pnpm run bump:patch  # or bump:minor, bump:major
