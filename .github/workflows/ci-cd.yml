@@ -24,16 +24,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
+          cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -89,16 +89,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: ${{ env.REGISTRY_URL }}
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: latest
+          cache: 'pnpm'
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
