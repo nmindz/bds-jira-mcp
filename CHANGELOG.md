@@ -8,16 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- GitHub Actions CI/CD pipeline for automated testing and NPM publishing
 - Centralized error handler utility for consistent JIRA API error messaging
 - New `errorHandler.ts` module in utils directory
+- Automated version checking and NPM deployment on master branch
+- GitHub Release creation with changelog extraction
+- Build artifact generation and test coverage reporting
 
 ### Changed
 - Refactored JIRA service to use centralized error handling
 - Improved error message consistency across all JIRA operations
 - Test suite cleanup and project structure improvements
+- CI/CD workflow uses pnpm for package management consistency
+- Updated CI/CD workflow to use specific pnpm version (8.11.0) with fallback installation strategy
 
 ### Fixed
 - Smart commit script hanging issue by adding `process.exit(0)`
+- CI/CD workflow compatibility with pnpm lockfile versioning
 
 ## [1.1.2] - 2025-01-08
 

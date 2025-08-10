@@ -18,9 +18,12 @@ The pre-commit framework ensures that every commit maintains high quality standa
 # Install dependencies (already done if you've run npm install)
 npm install
 
+# Install pre-commit framework (if not already installed)
+pip install pre-commit
+# Or: brew install pre-commit (on macOS)
+
 # Set up pre-commit hooks
-npm run pre-commit-setup
-# Or manually: npx pre-commit install
+pre-commit install
 ```
 
 ### Verify Installation
@@ -191,10 +194,17 @@ grep -q "[$version]" CHANGELOG.md || exit 1
 
 #### Hook Installation Problems
 ```bash
-# Reinstall pre-commit
-npm uninstall pre-commit
-npm install pre-commit
-npm run pre-commit-setup
+# Reinstall pre-commit framework
+pip uninstall pre-commit
+pip install pre-commit
+
+# Or on macOS with Homebrew
+brew uninstall pre-commit
+brew install pre-commit
+
+# Reinstall hooks
+pre-commit uninstall
+pre-commit install
 ```
 
 #### Documentation Update Failures

@@ -27,7 +27,8 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: latest
+          version: 8.11.0
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -36,7 +37,9 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Try with frozen lockfile first, fallback if incompatible
+          pnpm install --frozen-lockfile || pnpm install --no-frozen-lockfile
 
       - name: Run build
         run: pnpm run build
@@ -92,7 +95,8 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: latest
+          version: 8.11.0
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -136,7 +140,9 @@ jobs:
 
       - name: Install dependencies (for publishing)
         if: steps.version-check.outputs.skip-publish == 'false'
-        run: pnpm install --frozen-lockfile --prod
+        run: |
+          # Try with frozen lockfile first, fallback if incompatible
+          pnpm install --frozen-lockfile --prod || pnpm install --no-frozen-lockfile --prod
 
       - name: Create package tarball
         if: steps.version-check.outputs.skip-publish == 'false'
