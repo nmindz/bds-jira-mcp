@@ -8,6 +8,11 @@ on:
   release:
     types: [published]
 
+permissions:
+  contents: write
+  packages: write
+  actions: read
+
 env:
   NODE_VERSION: '18'
   REGISTRY_URL: 'https://registry.npmjs.org'
