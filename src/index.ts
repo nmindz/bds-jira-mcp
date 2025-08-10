@@ -19,7 +19,7 @@ if (process.env.DEBUG === 'true' || process.env.ENVIRONMENT === 'development') {
 const server = new McpServer(
   {
     name: "jira-mcp",
-    version: "1.1.2",
+    version: "1.1.4",
   },
   {
     capabilities: {

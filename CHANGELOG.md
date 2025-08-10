@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.4] - 2025-01-10
+
+### Fixed
+- GitHub Actions release job workflow issues
+- PNPM version compatibility in CI/CD pipeline  
+- PNPM setup in CI/CD workflow
+- Package lockfile conflicts with GitHub Actions
+
+### Changed
+- Rebuilt pnpm-lock.yaml for consistency
+- Enhanced CI/CD workflow stability and reliability
+
 ## [1.1.3] - 2025-01-10
 
 ### Added
