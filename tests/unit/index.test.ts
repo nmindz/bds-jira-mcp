@@ -30,7 +30,7 @@ describe('MCP Server Index', () => {
     const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
     const packageJson = JSON.parse(packageJsonContent);
     expect(packageJson.name).toBe('bds-jira-mcp');
-    expect(packageJson.version).toBe('1.1.4');
+    expect(packageJson.version).toBe('1.1.5');
   });
 
   test('should define expected MCP tools list', () => {

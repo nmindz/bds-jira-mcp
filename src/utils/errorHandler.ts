@@ -5,6 +5,7 @@ interface ErrorHandlerOptions {
   ticketId?: string;
   issueKeys?: string[];
   customMessages?: Record<number, string>;
+  isLegacyMode?: boolean;
 }
 
 /**
@@ -29,7 +30,9 @@ export function handleJiraApiError(error: unknown, options: ErrorHandlerOptions)
             throw new Error(`One or both issues not found: ${options.issueKeys.join(', ')}`);
           }
         }
-        throw new Error(`Resource not found for ${options.operation}`);
+        const legacyHint = options.isLegacyMode ? 
+          " - JIRA Server may not support this endpoint" : "";
+        throw new Error(`Resource not found for ${options.operation}${legacyHint}`);
 
       case 401:
         throw new Error("JIRA authentication failed. Check your credentials.");
@@ -47,14 +50,17 @@ export function handleJiraApiError(error: unknown, options: ErrorHandlerOptions)
         // Handle detailed validation errors for ticket creation
         if (error.response?.data?.errors || error.response?.data?.errorMessages) {
           const errorMessages = error.response.data.errors || error.response.data.errorMessages || [];
+          const legacySuffix = options.isLegacyMode ? " (check field mappings for JIRA Server)" : "";
           if (Array.isArray(errorMessages)) {
-            throw new Error(`Invalid data: ${errorMessages.join(', ')}`);
+            throw new Error(`Invalid data: ${errorMessages.join(', ')}${legacySuffix}`);
           } else {
             const errorDetails = Object.entries(errorMessages).map(([field, message]) => `${field}: ${message}`).join(', ');
-            throw new Error(`Invalid data: ${errorDetails || statusText}`);
+            throw new Error(`Invalid data: ${errorDetails || statusText}${legacySuffix}`);
           }
         }
-        throw new Error(`Invalid request for ${options.operation}: ${statusText}`);
+        const legacyContext = options.isLegacyMode ? 
+          " - check field mappings for JIRA Server" : "";
+        throw new Error(`Invalid request for ${options.operation}: ${statusText}${legacyContext}`);
 
       default:
         // Use custom message if provided, otherwise generic API error

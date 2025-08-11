@@ -83,6 +83,13 @@ export class JiraService {
   private v3Client: AxiosInstance | null = null;
   private epicLinkField: string = 'customfield_10014'; // Default epic link field ID
   private initialized: boolean = false;
+  private isLegacyMode: boolean = false;
+  private fieldMappings: Record<string, string> = {};
+  private serverCapabilities: {
+    hasEpics: boolean;
+    hasIssueLinks: boolean;
+    version: string;
+  } | null = null;
 
   constructor() {
     // Defer initialization until first use
@@ -93,38 +100,153 @@ export class JiraService {
 
     const baseURL = process.env.JIRA_BASE_URL;
     const email = process.env.JIRA_EMAIL;
+    const username = process.env.JIRA_USERNAME;
     const token = process.env.JIRA_API_TOKEN;
 
-    if (!baseURL || !email || !token) {
+    if (!baseURL || !token) {
       throw new Error(
-        "Missing required JIRA environment variables: JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN"
+        "Missing required JIRA environment variables: JIRA_BASE_URL, JIRA_API_TOKEN"
       );
     }
 
-    const authConfig = {
-      auth: {
-        username: email,
-        password: token,
-      },
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-    };
+    // Detect legacy mode from environment variable
+    this.isLegacyMode = process.env.JIRA_LEGACY_API === 'true';
 
-    // API v2 client for backward compatibility
-    this.client = axios.create({
-      baseURL: `${baseURL}/rest/api/2`,
-      ...authConfig,
-    });
+    let authConfig: any;
+    
+    if (this.isLegacyMode) {
+      // JIRA Server: Use Bearer token authentication
+      authConfig = {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      };
+    } else {
+      // JIRA Cloud: Use Basic authentication with email + token
+      if (!email) {
+        throw new Error(
+          "JIRA Cloud requires JIRA_EMAIL environment variable"
+        );
+      }
+      authConfig = {
+        auth: {
+          username: email,
+          password: token,
+        },
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      };
+    }
 
-    // API v3 client for linking functionality
-    this.v3Client = axios.create({
-      baseURL: `${baseURL}/rest/api/3`,
-      ...authConfig,
-    });
+    if (this.isLegacyMode) {
+      // JIRA Server: API v2 only
+      this.client = axios.create({
+        baseURL: `${baseURL}/rest/api/2`,
+        ...authConfig,
+      });
+      // No v3Client for legacy mode
+      this.v3Client = null;
+    } else {
+      // JIRA Cloud: Current implementation (v2 + v3)
+      this.client = axios.create({
+        baseURL: `${baseURL}/rest/api/2`,
+        ...authConfig,
+      });
+      this.v3Client = axios.create({
+        baseURL: `${baseURL}/rest/api/3`,
+        ...authConfig,
+      });
+    }
 
     this.initialized = true;
+
+    // Initialize field mappings for legacy mode (async operation deferred)
+    if (this.isLegacyMode) {
+      this.initializeLegacyFieldMappings().catch(error => {
+        console.warn('Could not initialize legacy field mappings:', error);
+      });
+    }
+  }
+
+  private async initializeLegacyFieldMappings(): Promise<void> {
+    try {
+      // Get all fields to map custom field IDs
+      const fieldsResponse = await this.client!.get('/field');
+      const fields = fieldsResponse.data;
+      
+      // Map common custom fields
+      this.fieldMappings = {
+        epicLink: this.findFieldByName(fields, ['Epic Link', 'Parent Link']) || 'customfield_10014',
+        storyPoints: this.findFieldByName(fields, ['Story Points', 'Story Point Estimate']) || 'customfield_10016',
+        sprint: this.findFieldByName(fields, ['Sprint']) || 'customfield_10020',
+      };
+      
+      // Detect server capabilities
+      await this.detectServerCapabilities();
+    } catch (error: any) {
+      // Handle permission errors gracefully - common with limited PAT permissions
+      if (error.response?.status === 403) {
+        console.warn('Limited JIRA permissions: Using default field mappings for JIRA Server');
+      } else {
+        console.warn('Could not initialize legacy field mappings:', error.message || error);
+      }
+      
+      // Use default mappings (work for most JIRA Server instances)
+      this.fieldMappings = {
+        epicLink: 'customfield_10014',
+        storyPoints: 'customfield_10016',
+        sprint: 'customfield_10020',
+      };
+
+      // Set basic server capabilities when field discovery fails
+      this.serverCapabilities = {
+        version: 'unknown',
+        hasEpics: true, // Assume epic support for JIRA Server
+        hasIssueLinks: true, // Most JIRA Server instances support links
+      };
+    }
+  }
+
+  private findFieldByName(fields: any[], possibleNames: string[]): string | null {
+    for (const name of possibleNames) {
+      const field = fields.find(f => 
+        f.name?.toLowerCase() === name.toLowerCase() ||
+        f.schema?.custom?.includes(name.toLowerCase())
+      );
+      if (field) return field.id;
+    }
+    return null;
+  }
+
+  private async detectServerCapabilities(): Promise<void> {
+    try {
+      const serverInfo = await this.client!.get('/serverInfo');
+      this.serverCapabilities = {
+        version: serverInfo.data.version,
+        hasEpics: this.fieldMappings.epicLink !== null,
+        hasIssueLinks: await this.testIssueLinkSupport(),
+      };
+    } catch (error) {
+      console.warn('Could not detect server capabilities:', error);
+      this.serverCapabilities = {
+        version: 'unknown',
+        hasEpics: true,
+        hasIssueLinks: true,
+      };
+    }
+  }
+
+  private async testIssueLinkSupport(): Promise<boolean> {
+    try {
+      await this.client!.get('/issueLinkType');
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   private validateProjectKey(providedKey?: string): string {
@@ -141,7 +263,11 @@ export class JiraService {
       const response = await this.client!.get(`/issue/${ticketId}`);
       return response.data;
     } catch (error) {
-      handleJiraApiError(error, { operation: "fetch JIRA ticket", ticketId });
+      handleJiraApiError(error, { 
+        operation: "fetch JIRA ticket", 
+        ticketId,
+        isLegacyMode: this.isLegacyMode
+      });
     }
   }
 
@@ -152,7 +278,11 @@ export class JiraService {
         body: JiraService.formatJiraText(comment),
       });
     } catch (error) {
-      handleJiraApiError(error, { operation: "add comment to JIRA ticket", ticketId });
+      handleJiraApiError(error, { 
+        operation: "add comment to JIRA ticket", 
+        ticketId,
+        isLegacyMode: this.isLegacyMode
+      });
     }
   }
 
@@ -207,8 +337,15 @@ export class JiraService {
         issuePayload.fields.priority = { name: request.priority };
       }
 
+      // Handle epic link differently based on mode
       if (request.epicLink) {
-        issuePayload.fields.parent = { key: request.epicLink };
+        if (this.isLegacyMode) {
+          // JIRA Server: Use custom field
+          issuePayload.fields[this.fieldMappings.epicLink] = request.epicLink;
+        } else {
+          // JIRA Cloud: Use parent field
+          issuePayload.fields.parent = { key: request.epicLink };
+        }
       }
 
       const response = await this.client!.post('/issue', issuePayload);
@@ -219,6 +356,7 @@ export class JiraService {
     } catch (error) {
       handleJiraApiError(error, {
         operation: "create JIRA ticket",
+        isLegacyMode: this.isLegacyMode,
         customMessages: {
           403: "Insufficient permissions to create tickets in this project."
         }
@@ -231,16 +369,31 @@ export class JiraService {
   async getAvailableLinkTypes(): Promise<IssueLinkType[]> {
     this.initialize();
     try {
-      const response = await this.v3Client!.get('/issueLinkType');
-      return response.data.issueLinkTypes;
+      if (this.isLegacyMode) {
+        // JIRA Server: Use v2 API
+        const response = await this.client!.get('/issueLinkType');
+        return response.data.issueLinkTypes;
+      } else {
+        // JIRA Cloud: Use v3 API
+        const response = await this.v3Client!.get('/issueLinkType');
+        return response.data.issueLinkTypes;
+      }
     } catch (error) {
-      handleJiraApiError(error, { operation: "fetch link types" });
+      handleJiraApiError(error, { 
+        operation: "fetch link types",
+        isLegacyMode: this.isLegacyMode
+      });
     }
   }
 
   async linkIssues(request: LinkIssuesRequest): Promise<void> {
     this.initialize();
     try {
+      // Check capability in legacy mode
+      if (this.isLegacyMode && !this.serverCapabilities?.hasIssueLinks) {
+        throw new Error("Issue linking not supported in this JIRA Server version");
+      }
+      
       const linkPayload: any = {
         type: { name: request.linkType },
         inwardIssue: { key: request.fromIssue },
@@ -253,11 +406,18 @@ export class JiraService {
         };
       }
 
-      await this.v3Client!.post('/issueLink', linkPayload);
+      if (this.isLegacyMode) {
+        // JIRA Server: Use v2 API
+        await this.client!.post('/issueLink', linkPayload);
+      } else {
+        // JIRA Cloud: Use v3 API
+        await this.v3Client!.post('/issueLink', linkPayload);
+      }
     } catch (error) {
       handleJiraApiError(error, {
         operation: "link issues",
         issueKeys: [request.fromIssue, request.toIssue],
+        isLegacyMode: this.isLegacyMode,
         customMessages: {
           400: "Invalid link request"
         }
@@ -268,10 +428,23 @@ export class JiraService {
   async getIssueLinks(ticketId: string): Promise<IssueLink[]> {
     this.initialize();
     try {
-      const response = await this.v3Client!.get(`/issue/${ticketId}?fields=issuelinks`);
+      let response;
+      
+      if (this.isLegacyMode) {
+        // JIRA Server: Use v2 API
+        response = await this.client!.get(`/issue/${ticketId}?fields=issuelinks`);
+      } else {
+        // JIRA Cloud: Use v3 API
+        response = await this.v3Client!.get(`/issue/${ticketId}?fields=issuelinks`);
+      }
+      
       return response.data.fields.issuelinks || [];
     } catch (error) {
-      handleJiraApiError(error, { operation: "get issue links", ticketId });
+      handleJiraApiError(error, { 
+        operation: "get issue links", 
+        ticketId,
+        isLegacyMode: this.isLegacyMode
+      });
     }
   }
 
@@ -280,11 +453,23 @@ export class JiraService {
   async setEpicLink(issueKey: string, epicKey: string): Promise<void> {
     this.initialize();
     try {
-      const updatePayload = {
-        fields: {
-          parent: { key: epicKey }
-        }
-      };
+      let updatePayload: any;
+      
+      if (this.isLegacyMode) {
+        // JIRA Server: Use custom field
+        updatePayload = {
+          fields: {
+            [this.fieldMappings.epicLink]: epicKey
+          }
+        };
+      } else {
+        // JIRA Cloud: Use parent field
+        updatePayload = {
+          fields: {
+            parent: { key: epicKey }
+          }
+        };
+      }
 
       await this.client!.put(`/issue/${issueKey}`, updatePayload);
     } catch (error) {
@@ -292,7 +477,7 @@ export class JiraService {
         operation: "set epic link",
         issueKeys: [issueKey, epicKey],
         customMessages: {
-          400: "Invalid parent link"
+          400: this.isLegacyMode ? "Invalid epic link custom field" : "Invalid parent link"
         }
       });
     }
@@ -302,7 +487,16 @@ export class JiraService {
   async getEpicIssues(epicKey: string): Promise<JiraTicket[]> {
     this.initialize();
     try {
-      const jql = `parent = ${epicKey}`;
+      let jql: string;
+      
+      if (this.isLegacyMode) {
+        // JIRA Server: Query by custom field
+        jql = `"${this.fieldMappings.epicLink}" = ${epicKey}`;
+      } else {
+        // JIRA Cloud: Query by parent
+        jql = `parent = ${epicKey}`;
+      }
+      
       const response = await this.client!.get('/search', {
         params: { jql, maxResults: 1000 }
       });
@@ -380,6 +574,11 @@ export class JiraService {
       const issues: string[] = [];
       const warnings: string[] = [];
 
+      // Add legacy mode warning
+      if (this.isLegacyMode) {
+        warnings.push("Running in legacy JIRA Server mode - some features may be limited");
+      }
+
       // Check if epic exists
       const epic = await this.getTicket(epicKey);
       if (epic.fields.issuetype.name !== 'Epic') {
@@ -395,6 +594,11 @@ export class JiraService {
 
       // Validate each issue in the epic
       for (const issue of epicIssues) {
+        // Skip link validation in legacy mode if not supported
+        if (this.isLegacyMode && !this.serverCapabilities?.hasIssueLinks) {
+          continue;
+        }
+        
         const links = await this.getIssueLinks(issue.key);
 
         if (issue.fields.issuetype.name === 'Story') {
