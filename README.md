@@ -12,7 +12,7 @@
   [![Jest](https://img.shields.io/badge/Jest-30.0-red.svg)](https://jestjs.io/)
   [![Build Status](https://img.shields.io/badge/build-passing-brightgreen.svg)](#)
   [![Coverage](https://img.shields.io/badge/coverage-80%25-green.svg)](#)
-  [![MCP Tools](https://img.shields.io/badge/MCP%20Tools-13-blue.svg)](#-available-tools)
+  [![MCP Tools](https://img.shields.io/badge/MCP%20Tools-15-blue.svg)](#-available-tools)
   [![Pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://pre-commit.com/)
   
 </div>
@@ -59,13 +59,13 @@ Download the latest release from [GitHub Releases](https://github.com/nmindz/bds
 **Option A: Install Package Tarball**
 ```bash
 # Download the .tgz file from releases
-npm install -g ./bds-jira-mcp-1.1.4.tgz
+npm install -g ./bds-jira-mcp-1.1.5.tgz
 ```
 
 **Option B: Use Pre-built Archive**
 ```bash
 # Download and extract the build archive
-tar -xzf bds-jira-mcp-build-v1.1.4.tar.gz
+tar -xzf bds-jira-mcp-build-v1.1.5.tar.gz
 cd build/
 node index.js
 ```
@@ -318,7 +318,7 @@ pnpm run bump:patch  # or bump:minor, bump:major
 
 # 2. Commit the version change
 git add package.json
-git commit -m "chore: bump version to 1.1.4"
+git commit -m "chore: bump version to 1.1.5"
 
 # 3. Run the release script (handles tagging & pushing)
 pnpm run release
@@ -338,12 +338,12 @@ pnpm run bump:patch  # or bump:minor, bump:major
 
 # 2. Commit and push
 git add package.json
-git commit -m "chore: bump version to 1.1.4"
+git commit -m "chore: bump version to 1.1.5"
 git push origin master
 
 # 3. Create and push tag
-git tag -a v1.1.4 -m "Release v1.1.4"
-git push origin v1.1.4
+git tag -a v1.1.5 -m "Release v1.1.5"
+git push origin v1.1.5
 ```
 
 The CI/CD pipeline will automatically:

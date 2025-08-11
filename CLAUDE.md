@@ -1,7 +1,7 @@
 # Claude MCP Development Context
 
 ## Project Overview
-This is a Model Context Protocol (MCP) server project called `bds-jira-mcp` (formerly `jira-mcp`) that provides comprehensive JIRA integration and project management capabilities. **Status**: Production-ready and fully functional as of v1.1.4.
+This is a Model Context Protocol (MCP) server project called `bds-jira-mcp` (formerly `jira-mcp`) that provides comprehensive JIRA integration and project management capabilities. **Status**: Production-ready and fully functional as of v1.1.5.
 
 ## Original Intent
 The user requested bootstrapping an MCP project in NodeJS according to the official MCP documentation at https://modelcontextprotocol.io/quickstart/server#node. The project evolved to focus on comprehensive JIRA integration and project management capabilities:
@@ -15,7 +15,7 @@ The user requested bootstrapping an MCP project in NodeJS according to the offic
 
 ## Development Context
 
-Last updated: 2025-08-10
+Last updated: 2025-08-11
 
 ### Quality Assurance & Automation
 - **Pre-commit Framework**: Comprehensive workflow automation using pre-commit hooks

@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.5] - 2025-08-11
+
+### Added
+- Legacy JIRA server support with backward compatibility mode
+- Enhanced authentication options supporting both email/token and username/token combinations
+- Server capability detection for dynamic feature enablement
+- Field mapping system for custom field handling across different JIRA instances
+- Improved JIRA service architecture with better legacy server support
+
+### Enhanced
+- JIRA service with flexible authentication and server detection
+- Error handling improvements in JIRA API interactions
+- Enhanced compatibility with older JIRA server versions
+
+### Changed
+- JIRA service refactored to support both cloud and legacy server instances
+- Authentication mechanism enhanced to support multiple credential formats
+- Service initialization improved with better error handling and validation
+
 ## [1.1.4] - 2025-01-10
 
 ### Fixed
