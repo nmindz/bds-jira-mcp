@@ -1,3 +1,5 @@
+[![MSeeP.ai Security Assessment Badge](https://mseep.net/pr/nmindz-bds-jira-mcp-badge.png)](https://mseep.ai/app/nmindz-bds-jira-mcp)
+
 <div align="center">
   <img src="logo.svg" alt="JIRA MCP Logo" width="200" height="200" />
   
